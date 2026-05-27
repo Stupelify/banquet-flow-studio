@@ -9,8 +9,80 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VenuesRouteImport } from './routes/venues'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as MenuRouteImport } from './routes/menu'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as EnquiriesRouteImport } from './routes/enquiries'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VenuesRoute = VenuesRouteImport.update({
+  id: '/venues',
+  path: '/venues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MenuRoute = MenuRouteImport.update({
+  id: '/menu',
+  path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnquiriesRoute = EnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsRoute = BookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +91,200 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/bookings': typeof BookingsRoute
+  '/calendar': typeof CalendarRoute
+  '/customers': typeof CustomersRoute
+  '/dashboard': typeof DashboardRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
+  '/menu': typeof MenuRoute
+  '/payments': typeof PaymentsRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/venues': typeof VenuesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/bookings': typeof BookingsRoute
+  '/calendar': typeof CalendarRoute
+  '/customers': typeof CustomersRoute
+  '/dashboard': typeof DashboardRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
+  '/menu': typeof MenuRoute
+  '/payments': typeof PaymentsRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/venues': typeof VenuesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/bookings': typeof BookingsRoute
+  '/calendar': typeof CalendarRoute
+  '/customers': typeof CustomersRoute
+  '/dashboard': typeof DashboardRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
+  '/menu': typeof MenuRoute
+  '/payments': typeof PaymentsRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/venues': typeof VenuesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/activity'
+    | '/bookings'
+    | '/calendar'
+    | '/customers'
+    | '/dashboard'
+    | '/enquiries'
+    | '/login'
+    | '/menu'
+    | '/payments'
+    | '/reports'
+    | '/settings'
+    | '/venues'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/activity'
+    | '/bookings'
+    | '/calendar'
+    | '/customers'
+    | '/dashboard'
+    | '/enquiries'
+    | '/login'
+    | '/menu'
+    | '/payments'
+    | '/reports'
+    | '/settings'
+    | '/venues'
+  id:
+    | '__root__'
+    | '/'
+    | '/activity'
+    | '/bookings'
+    | '/calendar'
+    | '/customers'
+    | '/dashboard'
+    | '/enquiries'
+    | '/login'
+    | '/menu'
+    | '/payments'
+    | '/reports'
+    | '/settings'
+    | '/venues'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityRoute: typeof ActivityRoute
+  BookingsRoute: typeof BookingsRoute
+  CalendarRoute: typeof CalendarRoute
+  CustomersRoute: typeof CustomersRoute
+  DashboardRoute: typeof DashboardRoute
+  EnquiriesRoute: typeof EnquiriesRoute
+  LoginRoute: typeof LoginRoute
+  MenuRoute: typeof MenuRoute
+  PaymentsRoute: typeof PaymentsRoute
+  ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
+  VenuesRoute: typeof VenuesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/venues': {
+      id: '/venues'
+      path: '/venues'
+      fullPath: '/venues'
+      preLoaderRoute: typeof VenuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/menu': {
+      id: '/menu'
+      path: '/menu'
+      fullPath: '/menu'
+      preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enquiries': {
+      id: '/enquiries'
+      path: '/enquiries'
+      fullPath: '/enquiries'
+      preLoaderRoute: typeof EnquiriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings': {
+      id: '/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof BookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +297,18 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityRoute: ActivityRoute,
+  BookingsRoute: BookingsRoute,
+  CalendarRoute: CalendarRoute,
+  CustomersRoute: CustomersRoute,
+  DashboardRoute: DashboardRoute,
+  EnquiriesRoute: EnquiriesRoute,
+  LoginRoute: LoginRoute,
+  MenuRoute: MenuRoute,
+  PaymentsRoute: PaymentsRoute,
+  ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
+  VenuesRoute: VenuesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
