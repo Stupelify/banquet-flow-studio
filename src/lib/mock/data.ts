@@ -57,7 +57,7 @@ export const CUSTOMERS: Customer[] = A.CUSTOMERS.map((c) => ({
   notes: c.notes ?? undefined,
 }));
 
-const statusOf = (b: A.BOOKINGS[number]): Booking["status"] => {
+const statusOf = (b: (typeof A.BOOKINGS)[number]): Booking["status"] => {
   if (b.isQuotation || b.quotation) return "quotation";
   if (b.isPencilBooking) return "pencil";
   const s = b.status;
