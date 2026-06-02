@@ -105,8 +105,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {!isPrint && !isLogin && <TopNav onOpenCmd={() => setCmd(true)} />}
-      <Outlet />
+      {!isPrint && !isLogin && <div className="hidden lg:block"><TopNav onOpenCmd={() => setCmd(true)} /></div>}
+      <div className={!isPrint && !isLogin ? "pb-14 lg:pb-0" : undefined}>
+        <Outlet />
+      </div>
+      {!isPrint && !isLogin && <BottomTabs />}
       {!isPrint && !isLogin && <CommandPalette open={cmd} onClose={() => setCmd(false)} />}
     </QueryClientProvider>
   );
