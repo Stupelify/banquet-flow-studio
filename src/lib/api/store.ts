@@ -15,9 +15,9 @@
  */
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type {
-  AuditLog, Booking, BookingPayment, Customer, PaymentMethod,
-} from "./types";
+import type { AuditLog, BookingPayment, PaymentMethod } from "./types";
+import type { Booking, Customer } from "@/lib/mock/types";
+
 
 type Overlay<T> = {
   added: T[];
