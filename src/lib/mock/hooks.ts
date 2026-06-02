@@ -25,8 +25,20 @@ const paymentFromApi = (p: BookingPayment): Payment => {
     ref: p.reference ?? undefined,
     amount: p.amount,
     receivedBy: API.userById.get(p.receivedBy)?.name ?? "You",
+    clearingDate: p.clearingDate ? new Date(p.clearingDate) : null,
   };
 };
+
+/** Fields the booking form / detail screen can edit on the master record. */
+type EditablePatch = Partial<Pick<Booking,
+  | "functionName" | "functionType" | "expectedGuests" | "confirmedGuests"
+  | "notes" | "internalNotes" | "hallIds" | "halls" | "hallCharges"
+  | "status" | "packs" | "additionalItems" | "extras"
+  | "discountAmount" | "discountPercentage" | "discountAmount2nd" | "discountPercentage2nd"
+  | "discount1" | "discount2Pct" | "settlementDiscount" | "taxPct" | "advanceRequired"
+  | "isQuotation" | "isPencilBooking" | "pencilExpiresAt" | "secondCustomerId" | "referredById"
+  | "start" | "end" | "customerId"
+>>;
 
 export function useBookings(): Booking[] {
   const added = useOpsStore((s) => s.bookings.added);
