@@ -5,7 +5,8 @@
  *
  * Phase 3 will migrate screens to import the full `@/lib/api/*` types directly.
  */
-import type { Booking, Customer, Enquiry, Hall, Venue } from "./types";
+import type { Booking, Customer, Enquiry, Hall, MealPack, MealSlotId, Venue } from "./types";
+import { mealSlotLabel } from "./types";
 import * as A from "@/lib/api/data";
 
 const D = (v: string | Date | null | undefined): Date => {
@@ -66,25 +67,38 @@ const statusOf = (b: (typeof A.BOOKINGS)[number]): Booking["status"] => {
   return "enquiry";
 };
 
-const slotName = (id: string): "Breakfast" | "Lunch" | "Hi-Tea" | "Dinner" => {
+const slotId = (id: string): MealSlotId => {
   const s = A.MEAL_SLOTS.find((m) => m.id === id)?.name?.toUpperCase() ?? "";
-  if (s.includes("BREAK")) return "Breakfast";
-  if (s.includes("LUNCH")) return "Lunch";
-  if (s.includes("TEA")) return "Hi-Tea";
-  return "Dinner";
+  if (s.includes("BREAK")) return "breakfast";
+  if (s.includes("LUNCH")) return "lunch";
+  if (s.includes("TEA")) return "hi-tea";
+  return "dinner";
 };
 
 export const BOOKINGS: Booking[] = A.BOOKINGS.map((b) => {
   const start = b.startDateTime ? new Date(b.startDateTime) : D(b.functionDate);
   const end = b.endDateTime ? new Date(b.endDateTime) : new Date(start.getTime() + 4 * 3_600_000);
-  const hallIds = (b.halls ?? []).map((h) => h.hallId);
-  const packs = (b.packs ?? []).map((p) => ({
-    slot: slotName(p.mealSlotId),
-    menuName: p.bookingMenu?.name ?? p.packName ?? "Menu",
-    plates: p.packCount,
-    ratePerPlate: p.ratePerPlate,
-    setupCost: p.setupCost,
-  }));
+  const halls = (b.halls ?? []).map((h) => ({ hallId: h.hallId, charges: h.charges }));
+  const hallIds = halls.map((h) => h.hallId);
+  const packs: MealPack[] = (b.packs ?? []).map((p) => {
+    const mealSlot = slotId(p.mealSlotId);
+    return {
+      mealSlot,
+      slot: mealSlotLabel(mealSlot),
+      packName: p.packName || p.bookingMenu?.name || undefined,
+      menuName: p.bookingMenu?.name ?? p.packName ?? "Menu",
+      templateMenuId: undefined,
+      plates: p.packCount,
+      ratePerPlate: p.ratePerPlate,
+      setupCost: p.setupCost,
+      extraCharges: p.extraCharges ?? 0,
+      hallRate: p.hallRateValue ?? 0,
+      startTime: p.startTime ?? undefined,
+      endTime: p.endTime ?? undefined,
+      items: (p.bookingMenu?.items ?? []).map((it) => ({ itemId: it.itemId, quantity: it.quantity })),
+      notes: p.notes ?? undefined,
+    };
+  });
   const payments = (b.payments ?? []).map((p) => ({
     id: p.id,
     date: new Date(p.paymentDate),
@@ -101,7 +115,12 @@ export const BOOKINGS: Booking[] = A.BOOKINGS.map((b) => {
     ref: p.reference ?? undefined,
     amount: p.amount,
     receivedBy: A.userById.get(p.receivedBy)?.name ?? "—",
+    clearingDate: p.clearingDate ? new Date(p.clearingDate) : null,
   }));
+  const discountAmount = b.discountAmount ?? 0;
+  const discountPercentage = b.discountPercentage ?? 0;
+  const discountAmount2nd = b.discountAmount2ndValue ?? 0;
+  const discountPercentage2nd = b.discountPercentage2ndValue ?? 0;
   return {
     id: b.id,
     status: statusOf(b),
@@ -109,22 +128,37 @@ export const BOOKINGS: Booking[] = A.BOOKINGS.map((b) => {
     functionName: b.functionName || b.functionType || "Function",
     functionType: b.functionType || "Function",
     customerId: b.customerId,
+    secondCustomerId: b.secondCustomerId ?? undefined,
+    referredById: b.referredById ?? undefined,
     start,
     end,
     hallIds: hallIds.length ? hallIds : (HALLS[0] ? [HALLS[0].id] : []),
+    halls: halls.length ? halls : (HALLS[0] ? [{ hallId: HALLS[0].id, charges: 0 }] : []),
     expectedGuests: b.expectedGuests,
     confirmedGuests: b.confirmedGuests ?? 0,
     packs,
-    hallCharges: (b.halls ?? []).reduce((s, h) => s + h.charges, 0),
-    extras: [],
-    discount1: b.discountAmount,
-    discount2Pct: b.discountPercentage2ndValue ?? 0,
+    hallCharges: halls.reduce((s, h) => s + h.charges, 0),
+    additionalItems: (b.additionalItems ?? []).map((x) => ({
+      description: x.description, charges: x.charges, quantity: x.quantity,
+    })),
+    extras: (b.additionalItems ?? []).map((x) => ({
+      label: x.description, amount: x.charges * x.quantity,
+    })),
+    discountAmount,
+    discountPercentage,
+    discountAmount2nd,
+    discountPercentage2nd,
+    discount1: discountAmount,
+    discount2Pct: discountPercentage2nd,
     settlementDiscount: b.settlementDiscountAmount ?? 0,
     taxPct: b.totalBillAmountValue ? Math.round((b.taxAmount / b.totalBillAmountValue) * 100) : 0,
     advanceRequired: b.advanceRequiredValue ?? 0,
+    isQuotation: !!b.isQuotation,
+    isPencilBooking: !!b.isPencilBooking,
+    pencilExpiresAt: b.pencilExpiresAt ? new Date(b.pencilExpiresAt) : undefined,
     payments,
     notes: b.notes ?? undefined,
-    pencilExpiresAt: b.pencilExpiresAt ? new Date(b.pencilExpiresAt) : undefined,
+    internalNotes: b.internalNotes ?? undefined,
     versions: b.versionNumber,
   };
 });

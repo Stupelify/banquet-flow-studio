@@ -46,9 +46,9 @@ function BookingsPage() {
   const selected = selectedId ? bookings.find((b) => b.id === selectedId) ?? null : null;
 
   return (
-    <div className="flex h-[calc(100vh-2.75rem)] overflow-hidden">
+    <div className="flex h-[calc(100dvh-3.5rem)] lg:h-[calc(100vh-2.75rem)] overflow-hidden flex-col lg:flex-row">
       {/* Master */}
-      <div className="w-[420px] shrink-0 border-r border-border flex flex-col bg-surface">
+      <div className={`${selectedId ? "hidden lg:flex" : "flex"} w-full lg:w-[420px] shrink-0 border-r border-border flex-col bg-surface`}>
         <div className="p-2 border-b border-border space-y-2">
           <div className="flex gap-2">
             <input
@@ -114,14 +114,19 @@ function BookingsPage() {
       </div>
 
       {/* Detail */}
-      {selected
-        ? <BookingDetail
+      <div className={`${selected ? "flex" : "hidden lg:flex"} flex-1 min-w-0`}>
+        {selected ? (
+          <BookingDetail
             booking={selected}
+            onBack={() => nav({ search: { ...search, id: undefined } })}
             onEdit={() => setEditing(selected)}
             onDelete={() => { if (confirm(`Delete booking ${selected.id}?`)) { deleteBooking(selected.id); nav({ search: { ...search, id: undefined } }); } }}
             lookup={customerLookup}
           />
-        : <div className="flex-1 grid place-items-center text-muted">Select a booking</div>}
+        ) : (
+          <div className="flex-1 grid place-items-center text-muted">Select a booking</div>
+        )}
+      </div>
 
       <BookingFormDialog
         open={creating || !!editing}
@@ -134,9 +139,10 @@ function BookingsPage() {
 }
 
 function BookingDetail({
-  booking: b, onEdit, onDelete, lookup,
+  booking: b, onBack, onEdit, onDelete, lookup,
 }: {
   booking: Booking;
+  onBack?: () => void;
   onEdit: () => void;
   onDelete: () => void;
   lookup: (id: string) => ReturnType<typeof useCustomerLookup> extends (id: string) => infer R ? R : never;
@@ -150,8 +156,12 @@ function BookingDetail({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-bg">
-      <header className="px-4 py-3 border-b border-border flex items-start justify-between">
-        <div className="min-w-0">
+      <header className="px-4 py-3 border-b border-border flex items-start justify-between gap-2">
+        <div className="min-w-0 flex items-start gap-2">
+          {onBack && (
+            <button onClick={onBack} className="lg:hidden mono text-[14px] leading-none px-1 -ml-1 text-muted hover:text-fg" aria-label="Back">‹</button>
+          )}
+          <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="mono text-[10px] text-muted">{b.id}</span>
             <span className="mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 border" style={{ color: tok.color, borderColor: tok.color }}>{tok.label}</span>
@@ -159,8 +169,9 @@ function BookingDetail({
           </div>
           <h1 className="text-[18px] font-semibold leading-tight mt-1">{b.functionName}</h1>
           <div className="text-[11px] text-muted mt-0.5">{c.name} · {c.phone} · {formatDate(b.start)} {formatTime(b.start)}–{formatTime(b.end)}</div>
+          </div>
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-1 shrink-0 flex-wrap justify-end">
           <button onClick={onEdit} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Edit</button>
           <button onClick={onDelete} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border text-conflict hover:bg-surface-2">Delete</button>
           <button onClick={() => setPaying(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono bg-accent text-accent-fg">Add Payment</button>
