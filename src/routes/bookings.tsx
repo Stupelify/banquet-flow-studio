@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
-import { BOOKINGS, bookingTotal, customerById, hallById } from "@/lib/mock/data";
+import { useBookings, useCustomerLookup, useCustomers, bookingTotal, staticHallById as hallById } from "@/lib/mock/hooks";
+import { useOpsStore } from "@/lib/api/store";
 import { formatDate, formatINR, formatINRShort, formatTime, relativeDur } from "@/lib/format";
 import { statusToken } from "@/lib/calendar-utils";
 import type { Booking } from "@/lib/mock/types";
+import { BookingFormDialog } from "@/components/forms/BookingFormDialog";
+import { PaymentFormDialog } from "@/components/forms/PaymentFormDialog";
 
 const searchSchema = z.object({ id: z.string().optional(), status: z.string().optional(), q: z.string().optional() });
 
@@ -17,37 +20,50 @@ export const Route = createFileRoute("/bookings")({
 function BookingsPage() {
   const search = useSearch({ from: "/bookings" });
   const nav = Route.useNavigate();
+  const bookings = useBookings();
+  const customers = useCustomers();
+  const customerLookup = useCustomerLookup();
+  const deleteBooking = useOpsStore((s) => s.deleteBooking);
+
   const [q, setQ] = useState(search.q ?? "");
   const [statusFilter, setStatusFilter] = useState<string>(search.status ?? "all");
+  const [editing, setEditing] = useState<Booking | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const filtered = useMemo(() => {
-    return BOOKINGS
+    return bookings
       .filter((b) => statusFilter === "all" || b.status === statusFilter)
       .filter((b) => {
         if (!q) return true;
         const lo = q.toLowerCase();
-        const c = customerById(b.customerId);
+        const c = customerLookup(b.customerId);
         return b.functionName.toLowerCase().includes(lo) || b.id.toLowerCase().includes(lo) || c.name.toLowerCase().includes(lo);
       })
       .sort((a, b) => +b.start - +a.start);
-  }, [q, statusFilter]);
+  }, [bookings, q, statusFilter, customerLookup]);
 
   const selectedId = search.id ?? filtered[0]?.id ?? null;
-  const selected = selectedId ? BOOKINGS.find((b) => b.id === selectedId) ?? null : null;
+  const selected = selectedId ? bookings.find((b) => b.id === selectedId) ?? null : null;
 
   return (
     <div className="flex h-[calc(100vh-2.75rem)] overflow-hidden">
       {/* Master */}
       <div className="w-[420px] shrink-0 border-r border-border flex flex-col bg-surface">
         <div className="p-2 border-b border-border space-y-2">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search bookings, customers…"
-            className="w-full h-8 px-2 bg-bg border border-border text-[12px] outline-none focus:border-accent"
-          />
+          <div className="flex gap-2">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search bookings, customers…"
+              className="flex-1 h-8 px-2 bg-bg border border-border text-[12px] outline-none focus:border-accent"
+            />
+            <button
+              onClick={() => setCreating(true)}
+              className="h-8 px-2 text-[11px] uppercase tracking-widest mono bg-accent text-accent-fg whitespace-nowrap"
+            >+ New</button>
+          </div>
           <div className="flex gap-px overflow-x-auto scrollbar-thin">
-            {(["all", "confirmed", "pencil", "quotation", "enquiry"] as const).map((s) => (
+            {(["all", "confirmed", "pencil", "quotation", "enquiry", "cancelled"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
@@ -59,7 +75,7 @@ function BookingsPage() {
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {filtered.map((b) => {
-            const c = customerById(b.customerId);
+            const c = customerLookup(b.customerId);
             const total = bookingTotal(b);
             const sel = b.id === selectedId;
             const tok = statusToken(b.status);
@@ -98,17 +114,39 @@ function BookingsPage() {
       </div>
 
       {/* Detail */}
-      {selected ? <BookingDetail booking={selected} /> : <div className="flex-1 grid place-items-center text-muted">Select a booking</div>}
+      {selected
+        ? <BookingDetail
+            booking={selected}
+            onEdit={() => setEditing(selected)}
+            onDelete={() => { if (confirm(`Delete booking ${selected.id}?`)) { deleteBooking(selected.id); nav({ search: { ...search, id: undefined } }); } }}
+            lookup={customerLookup}
+          />
+        : <div className="flex-1 grid place-items-center text-muted">Select a booking</div>}
+
+      <BookingFormDialog
+        open={creating || !!editing}
+        onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }}
+        booking={editing}
+        customers={customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone }))}
+      />
     </div>
   );
 }
 
-function BookingDetail({ booking: b }: { booking: Booking }) {
-  const c = customerById(b.customerId);
+function BookingDetail({
+  booking: b, onEdit, onDelete, lookup,
+}: {
+  booking: Booking;
+  onEdit: () => void;
+  onDelete: () => void;
+  lookup: (id: string) => ReturnType<typeof useCustomerLookup> extends (id: string) => infer R ? R : never;
+}) {
+  const c = lookup(b.customerId);
   const total = bookingTotal(b);
   const tok = statusToken(b.status);
   const paidPct = total.grand > 0 ? Math.min(100, Math.round((total.received / total.grand) * 100)) : 0;
   const [tab, setTab] = useState<"overview" | "money" | "packs" | "halls" | "payments" | "versions">("overview");
+  const [paying, setPaying] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-bg">
@@ -123,9 +161,9 @@ function BookingDetail({ booking: b }: { booking: Booking }) {
           <div className="text-[11px] text-muted mt-0.5">{c.name} · {c.phone} · {formatDate(b.start)} {formatTime(b.start)}–{formatTime(b.end)}</div>
         </div>
         <div className="flex gap-1 shrink-0">
-          <button className="px-2 py-1 text-[10px] uppercase tracking-widest border border-border hover:bg-surface-2">Edit</button>
-          <button className="px-2 py-1 text-[10px] uppercase tracking-widest border border-border hover:bg-surface-2">Print</button>
-          <button className="px-2 py-1 text-[10px] uppercase tracking-widest bg-accent text-accent-fg">Add Payment</button>
+          <button onClick={onEdit} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Edit</button>
+          <button onClick={onDelete} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border text-conflict hover:bg-surface-2">Delete</button>
+          <button onClick={() => setPaying(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono bg-accent text-accent-fg">Add Payment</button>
         </div>
       </header>
 
@@ -197,6 +235,7 @@ function BookingDetail({ booking: b }: { booking: Booking }) {
           )}
           {tab === "packs" && (
             <Section title="Meal packs">
+              {b.packs.length === 0 ? <div className="text-muted text-[11px]">No meal packs.</div> :
               <table className="w-full text-[11px]">
                 <thead><tr className="text-[10px] uppercase tracking-widest text-muted mono border-b border-border">
                   <th className="text-left py-1.5 font-normal">Slot</th>
@@ -218,12 +257,12 @@ function BookingDetail({ booking: b }: { booking: Booking }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table>}
             </Section>
           )}
           {tab === "payments" && (
             <Section title="Payment ledger">
-              {b.payments.length === 0 ? <div className="text-muted text-[11px]">No payments yet.</div> :
+              {b.payments.length === 0 ? <div className="text-muted text-[11px]">No payments yet. Click <em>Add Payment</em> above.</div> :
               <table className="w-full text-[11px]">
                 <thead><tr className="text-[10px] uppercase tracking-widest text-muted mono border-b border-border">
                   <th className="text-left py-1.5 font-normal">Date</th>
@@ -278,7 +317,7 @@ function BookingDetail({ booking: b }: { booking: Booking }) {
           )}
         </div>
 
-        {/* Money stack always in right column */}
+        {/* Money stack */}
         <aside className="col-span-12 lg:col-span-4 p-4 bg-surface-2/30">
           <div className="border border-border p-3 bg-surface mono">
             <div className="text-[9px] uppercase tracking-widest text-faint mb-3">Money stack</div>
@@ -300,6 +339,8 @@ function BookingDetail({ booking: b }: { booking: Booking }) {
           </div>
         </aside>
       </div>
+
+      <PaymentFormDialog open={paying} onOpenChange={setPaying} bookingId={b.id} balanceHint={total.balance} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BOOKINGS, customerById } from "@/lib/mock/data";
+import { useBookings, useCustomerLookup } from "@/lib/mock/hooks";
 import { formatDate, formatINR } from "@/lib/format";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/payments")({
   head: () => ({ meta: [{ title: "Payments — Bika Ops" }, { name: "description", content: "Global payment ledger across all bookings." }] }),
@@ -8,8 +9,14 @@ export const Route = createFileRoute("/payments")({
 });
 
 function PaymentsPage() {
-  const rows = BOOKINGS.flatMap((b) => b.payments.map((p) => ({ ...p, booking: b, customer: customerById(b.customerId) })))
-    .sort((a, b) => +b.date - +a.date);
+  const bookings = useBookings();
+  const lookup = useCustomerLookup();
+  const rows = useMemo(
+    () => bookings
+      .flatMap((b) => b.payments.map((p) => ({ ...p, booking: b, customer: lookup(b.customerId) })))
+      .sort((a, b) => +b.date - +a.date),
+    [bookings, lookup],
+  );
   const total = rows.reduce((s, r) => s + r.amount, 0);
   return (
     <div className="h-[calc(100vh-2.75rem)] overflow-y-auto scrollbar-thin">
