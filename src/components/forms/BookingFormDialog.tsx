@@ -659,7 +659,8 @@ function useLiveBill(form: F) {
   const v = useWatch({ control: form.control });
   return useMemo(() => computeBill({
     packs: ((v.packs ?? []) as MealPack[]),
-    additionalItems: v.additionalItems ?? [],
+    additionalItems: ((v.additionalItems ?? []) as { description?: string; charges?: number; quantity?: number }[])
+      .map((x) => ({ description: x.description ?? "", charges: Number(x.charges ?? 0), quantity: Number(x.quantity ?? 1) })),
     discountAmount: v.discountAmount ?? 0,
     discountPercentage: v.discountPercentage ?? 0,
     discountAmount2nd: v.discountAmount2nd ?? 0,
