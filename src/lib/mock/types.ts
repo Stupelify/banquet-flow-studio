@@ -5,7 +5,10 @@ export type EventSource = "in-app" | "google";
 export type MealSlotId = "breakfast" | "lunch" | "hi-tea" | "dinner";
 export const MEAL_SLOT_IDS: MealSlotId[] = ["breakfast", "lunch", "hi-tea", "dinner"];
 
-export function mealSlotLabel(s: MealSlotId): string {
+/** Legacy display alias kept for screens that read pack.slot directly. */
+export type MealSlotDisplay = "Breakfast" | "Lunch" | "Hi-Tea" | "Dinner";
+
+export function mealSlotLabel(s: MealSlotId): MealSlotDisplay {
   switch (s) {
     case "breakfast": return "Breakfast";
     case "lunch":     return "Lunch";
