@@ -169,8 +169,9 @@ function BookingDetail({
           </div>
           <h1 className="text-[18px] font-semibold leading-tight mt-1">{b.functionName}</h1>
           <div className="text-[11px] text-muted mt-0.5">{c.name} · {c.phone} · {formatDate(b.start)} {formatTime(b.start)}–{formatTime(b.end)}</div>
+          </div>
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-1 shrink-0 flex-wrap justify-end">
           <button onClick={onEdit} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Edit</button>
           <button onClick={onDelete} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border text-conflict hover:bg-surface-2">Delete</button>
           <button onClick={() => setPaying(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono bg-accent text-accent-fg">Add Payment</button>
