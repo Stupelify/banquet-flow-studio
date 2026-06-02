@@ -59,26 +59,24 @@ export function useBookings(): Booking[] {
 
     const base: Booking[] = SEED_BOOKINGS.filter((b) => !deleted.has(b.id));
 
-    // Apply edits (the edits store holds canonical Booking; we map only the user-editable fields)
+    // Apply edits — overlay store holds an EditablePatch keyed by booking id.
     const merged: Booking[] = base.map((b) => {
-      const e = edits[b.id] as Partial<Booking & {
-        functionName: string; functionType: string; expectedGuests: number; confirmedGuests: number;
-        notes: string; hallIds: string[]; status: Booking["status"];
-      }> | undefined;
+      const e = edits[b.id] as EditablePatch | undefined;
       const extraPayments = paymentsByBooking.get(b.id) ?? [];
       const payments = [...b.payments.filter((p) => !delPayments.has(p.id)), ...extraPayments].sort((a, c) => +c.date - +a.date);
       if (!e) return { ...b, payments };
+      const startD = e.start instanceof Date ? e.start : (e.start ? new Date(e.start as unknown as string) : b.start);
+      const endD   = e.end   instanceof Date ? e.end   : (e.end   ? new Date(e.end   as unknown as string) : b.end);
+      const pencilD = e.pencilExpiresAt instanceof Date ? e.pencilExpiresAt
+        : (e.pencilExpiresAt ? new Date(e.pencilExpiresAt as unknown as string) : b.pencilExpiresAt);
       return {
         ...b,
-        ...("functionName" in e ? { functionName: String(e.functionName ?? b.functionName) } : {}),
-        ...("functionType" in e ? { functionType: String(e.functionType ?? b.functionType) } : {}),
-        ...("expectedGuests" in e ? { expectedGuests: Number(e.expectedGuests ?? b.expectedGuests) } : {}),
-        ...("confirmedGuests" in e ? { confirmedGuests: Number(e.confirmedGuests ?? b.confirmedGuests) } : {}),
-        ...("notes" in e ? { notes: e.notes as string | undefined } : {}),
-        ...("hallIds" in e && Array.isArray(e.hallIds) ? { hallIds: e.hallIds } : {}),
-        ...("status" in e && e.status ? { status: e.status } : {}),
+        ...e,
+        start: startD,
+        end: endD,
+        pencilExpiresAt: pencilD,
         payments,
-      };
+      } as Booking;
     });
 
     const additions: Booking[] = added.map((b) => ({
