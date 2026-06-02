@@ -5,7 +5,8 @@
  *
  * Phase 3 will migrate screens to import the full `@/lib/api/*` types directly.
  */
-import type { Booking, Customer, Enquiry, Hall, Venue } from "./types";
+import type { Booking, Customer, Enquiry, Hall, MealPack, MealSlotId, Venue } from "./types";
+import { mealSlotLabel } from "./types";
 import * as A from "@/lib/api/data";
 
 const D = (v: string | Date | null | undefined): Date => {
