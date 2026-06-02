@@ -48,7 +48,7 @@ function BookingsPage() {
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] lg:h-[calc(100vh-2.75rem)] overflow-hidden flex-col lg:flex-row">
       {/* Master */}
-      <div className="w-[420px] shrink-0 border-r border-border flex flex-col bg-surface">
+      <div className={`${selectedId ? "hidden lg:flex" : "flex"} w-full lg:w-[420px] shrink-0 border-r border-border flex-col bg-surface`}>
         <div className="p-2 border-b border-border space-y-2">
           <div className="flex gap-2">
             <input
