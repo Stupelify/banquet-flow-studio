@@ -139,9 +139,10 @@ function BookingsPage() {
 }
 
 function BookingDetail({
-  booking: b, onEdit, onDelete, lookup,
+  booking: b, onBack, onEdit, onDelete, lookup,
 }: {
   booking: Booking;
+  onBack?: () => void;
   onEdit: () => void;
   onDelete: () => void;
   lookup: (id: string) => ReturnType<typeof useCustomerLookup> extends (id: string) => infer R ? R : never;
