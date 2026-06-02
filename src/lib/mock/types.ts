@@ -17,8 +17,7 @@ export function mealSlotLabel(s: MealSlotId): MealSlotDisplay {
   }
 }
 
-/** Legacy display alias kept for screens that read pack.slot directly. */
-export type MealSlotDisplay = "Breakfast" | "Lunch" | "Hi-Tea" | "Dinner";
+
 
 export type Venue = { id: string; name: string; city: string };
 export type Hall = {
