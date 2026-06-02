@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { TopNav } from "@/components/shell/TopNav";
+import { BottomTabs } from "@/components/shell/BottomTabs";
 import { CommandPalette } from "@/components/shell/CommandPalette";
 
 function NotFoundComponent() {
