@@ -90,28 +90,8 @@ export function useCustomers(): Customer[] {
       if (!e) return c;
       return { ...c, ...e } as Customer;
     });
-    const additions = added.map((c) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone,
-      altPhone: c.alternatePhone ?? undefined,
-      email: c.email ?? "—",
-      community: c.caste ?? undefined,
-      city: c.city ?? "—",
-      dob: c.dateOfBirth ? new Date(c.dateOfBirth) : undefined,
-      anniversary: c.anniversary ? new Date(c.anniversary) : undefined,
-      occupation: c.occupation ?? undefined,
-      company: c.companyName ?? undefined,
-      gst: c.gstNumber ?? undefined,
-      pan: c.panNumber ?? undefined,
-      priority: (c.priority === 1 ? "VIP" : c.priority === 2 ? "High" : "Normal") as Customer["priority"],
-      rating: Math.min(5, Math.max(0, Number(c.rating ?? 0))),
-      visitCount: c.visitCount,
-      referredBy: c.referredById ?? undefined,
-      referrals: (c.referrals ?? []).map((r) => r.id),
-      notes: c.notes ?? undefined,
-    } satisfies Customer));
-    return [...additions, ...merged];
+    return [...added, ...merged];
+
   }, [added, edits, deletedIds]);
 }
 
