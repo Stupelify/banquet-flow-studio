@@ -114,14 +114,19 @@ function BookingsPage() {
       </div>
 
       {/* Detail */}
-      {selected
-        ? <BookingDetail
+      <div className={`${selected ? "flex" : "hidden lg:flex"} flex-1 min-w-0`}>
+        {selected ? (
+          <BookingDetail
             booking={selected}
+            onBack={() => nav({ search: { ...search, id: undefined } })}
             onEdit={() => setEditing(selected)}
             onDelete={() => { if (confirm(`Delete booking ${selected.id}?`)) { deleteBooking(selected.id); nav({ search: { ...search, id: undefined } }); } }}
             lookup={customerLookup}
           />
-        : <div className="flex-1 grid place-items-center text-muted">Select a booking</div>}
+        ) : (
+          <div className="flex-1 grid place-items-center text-muted">Select a booking</div>
+        )}
+      </div>
 
       <BookingFormDialog
         open={creating || !!editing}
