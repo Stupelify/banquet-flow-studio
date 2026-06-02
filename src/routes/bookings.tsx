@@ -156,8 +156,12 @@ function BookingDetail({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-bg">
-      <header className="px-4 py-3 border-b border-border flex items-start justify-between">
-        <div className="min-w-0">
+      <header className="px-4 py-3 border-b border-border flex items-start justify-between gap-2">
+        <div className="min-w-0 flex items-start gap-2">
+          {onBack && (
+            <button onClick={onBack} className="lg:hidden mono text-[14px] leading-none px-1 -ml-1 text-muted hover:text-fg" aria-label="Back">‹</button>
+          )}
+          <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="mono text-[10px] text-muted">{b.id}</span>
             <span className="mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 border" style={{ color: tok.color, borderColor: tok.color }}>{tok.label}</span>
