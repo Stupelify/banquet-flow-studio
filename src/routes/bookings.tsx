@@ -46,7 +46,7 @@ function BookingsPage() {
   const selected = selectedId ? bookings.find((b) => b.id === selectedId) ?? null : null;
 
   return (
-    <div className="flex h-[calc(100vh-2.75rem)] overflow-hidden">
+    <div className="flex h-[calc(100dvh-3.5rem)] lg:h-[calc(100vh-2.75rem)] overflow-hidden flex-col lg:flex-row">
       {/* Master */}
       <div className="w-[420px] shrink-0 border-r border-border flex flex-col bg-surface">
         <div className="p-2 border-b border-border space-y-2">
