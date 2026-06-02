@@ -144,7 +144,16 @@ export const useOpsStore = create<State & Actions>()(
     {
       name: "bika-ops-store-v1",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      // Bumped 1 → 2 for the multi-pack/billing schema. `migrate` returns the
+      // initial state on any older version, silently wiping the old overlay.
+      // For manual recovery: localStorage.removeItem("bika-ops-store-v1").
+      version: 2,
+      migrate: (persisted, fromVersion) => {
+        if (fromVersion < 2) {
+          return { ...initial, currentUser: (persisted as Partial<State>)?.currentUser ?? initial.currentUser } as State & Actions;
+        }
+        return persisted as State & Actions;
+      },
       partialize: (s) => ({
         bookings: s.bookings,
         customers: s.customers,
