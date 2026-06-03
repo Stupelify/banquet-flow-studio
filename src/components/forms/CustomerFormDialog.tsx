@@ -91,29 +91,39 @@ export function CustomerFormDialog({
   const errors = form.formState.errors;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-surface border-border">
-        <DialogHeader>
-          <DialogTitle className="mono uppercase tracking-widest text-[11px]">
+      <DialogContent className="max-w-full h-[100dvh] rounded-none p-0 sm:max-w-4xl sm:h-[85vh] sm:rounded-sm bg-surface border-border flex flex-col gap-0">
+        <DialogHeader className="px-3 sm:px-4 py-2.5 border-b border-border shrink-0">
+          <DialogTitle className="mono uppercase tracking-widest text-[11px] text-left">
             {isNew ? "New customer" : `Edit ${customer?.name}`}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 text-[12px]">
-          <div className="grid grid-cols-2 gap-3">
-            <F label="Name" err={errors.name?.message}><input className={inp} {...form.register("name")} /></F>
-            <F label="Priority"><select className={inp} {...form.register("priority")}><option>VIP</option><option>High</option><option>Normal</option></select></F>
-            <F label="Phone" err={errors.phone?.message}><input className={inp} {...form.register("phone")} /></F>
-            <F label="Alt phone" err={errors.altPhone?.message}><input className={inp} {...form.register("altPhone")} /></F>
-            <F label="Email" err={errors.email?.message}><input className={inp} {...form.register("email")} /></F>
-            <F label="City" err={errors.city?.message}><input className={inp} {...form.register("city")} /></F>
-            <F label="Community"><input className={inp} {...form.register("community")} /></F>
-            <F label="Occupation"><input className={inp} {...form.register("occupation")} /></F>
-            <F label="Company"><input className={inp} {...form.register("company")} /></F>
-            <F label="Rating (0–5)"><input type="number" className={inp} {...form.register("rating")} /></F>
-            <F label="GST" err={errors.gst?.message}><input className={inp} {...form.register("gst")} /></F>
-            <F label="PAN" err={errors.pan?.message}><input className={inp} {...form.register("pan")} /></F>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto scrollbar-thin px-3 sm:px-4 py-3 space-y-4 text-[12px]">
+            <FieldGroup title="Identity">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <F label="Name" err={errors.name?.message}><input className={inp} {...form.register("name")} /></F>
+                <F label="Priority"><select className={inp} {...form.register("priority")}><option>VIP</option><option>High</option><option>Normal</option></select></F>
+                <F label="Phone" err={errors.phone?.message}><input className={inp} {...form.register("phone")} /></F>
+                <F label="Alt phone" err={errors.altPhone?.message}><input className={inp} {...form.register("altPhone")} /></F>
+                <F label="Email" err={errors.email?.message}><input className={inp} {...form.register("email")} /></F>
+                <F label="City" err={errors.city?.message}><input className={inp} {...form.register("city")} /></F>
+              </div>
+            </FieldGroup>
+            <FieldGroup title="Profile">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <F label="Community"><input className={inp} {...form.register("community")} /></F>
+                <F label="Occupation"><input className={inp} {...form.register("occupation")} /></F>
+                <F label="Company"><input className={inp} {...form.register("company")} /></F>
+                <F label="Rating (0–5)"><input type="number" className={inp} {...form.register("rating")} /></F>
+                <F label="GST" err={errors.gst?.message}><input className={inp} {...form.register("gst")} /></F>
+                <F label="PAN" err={errors.pan?.message}><input className={inp} {...form.register("pan")} /></F>
+              </div>
+            </FieldGroup>
+            <FieldGroup title="Notes">
+              <F label="Notes"><textarea rows={4} className={inp + " h-auto py-1.5"} {...form.register("notes")} /></F>
+            </FieldGroup>
           </div>
-          <F label="Notes"><textarea rows={2} className={inp} {...form.register("notes")} /></F>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="px-3 sm:px-4 py-2.5 border-t border-border gap-2 shrink-0 bg-surface">
             <button type="button" onClick={() => onOpenChange(false)} className="px-3 py-1.5 text-[11px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Cancel</button>
             <button type="submit" className="px-3 py-1.5 text-[11px] uppercase tracking-widest mono bg-accent text-accent-fg">{isNew ? "Create" : "Save"}</button>
           </DialogFooter>
@@ -123,7 +133,7 @@ export function CustomerFormDialog({
   );
 }
 
-const inp = "w-full h-8 px-2 bg-bg border border-border text-[12px] outline-none focus:border-accent";
+const inp = "w-full h-9 px-2 bg-bg border border-border text-[12px] outline-none focus:border-accent";
 function F({ label, children, err }: { label: string; children: React.ReactNode; err?: string }) {
   return (
     <label className="block">
@@ -131,5 +141,13 @@ function F({ label, children, err }: { label: string; children: React.ReactNode;
       {children}
       {err && <div className="text-[10px] text-conflict mt-0.5">{err}</div>}
     </label>
+  );
+}
+function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="text-[9px] uppercase tracking-widest text-faint mono mb-2">{title}</div>
+      {children}
+    </section>
   );
 }
