@@ -130,16 +130,8 @@ export const useOpsStore = create<State & Actions>()(
         };
         get().upsertBooking(next);
         get().log("party_over", "booking", b.id, b.functionName, { settlementDiscount, by: userName });
-      },
-        set((s) => ({
-          bookings: {
-            ...s.bookings,
-            added: s.bookings.added.filter((b) => b.id !== id),
-            deletedIds: Array.from(new Set([...s.bookings.deletedIds, id])),
-          },
-        }));
-        get().log("delete", "booking", id, null);
-      },
+
+
 
       upsertCustomer: (c, opts) => {
         set((s) => {
