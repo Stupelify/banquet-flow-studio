@@ -76,6 +76,15 @@ export type Payment = {
   clearingDate?: Date | null;
 };
 
+export type BookingVersionSnapshot = {
+  version: number;
+  createdAt: string;       // ISO
+  createdBy: string;       // user name (denormalised for display)
+  reason?: string;
+  /** Full booking JSON (Dates serialised as ISO strings). */
+  data: unknown;
+};
+
 export type Booking = {
   id: string;
   status: BookingStatus;
@@ -98,7 +107,7 @@ export type Booking = {
 
   packs: MealPack[];
 
-  /** Sum of `halls[].charges`. Kept for legacy money-stack display. */
+  /** Sum of `halls[].charges`. */
   hallCharges: number;
 
   additionalItems: AdditionalItem[];
@@ -128,6 +137,14 @@ export type Booking = {
   notes?: string;
   internalNotes?: string;
   versions: number;
+
+  /** Finalize → snapshot trail. Newest first. */
+  versionHistory?: BookingVersionSnapshot[];
+
+  /** Party-over / settlement bookkeeping. */
+  partyOver?: boolean;
+  partyOverAt?: Date;
+  partyOverNotes?: string;
 };
 
 export type Customer = {
