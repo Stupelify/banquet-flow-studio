@@ -375,6 +375,8 @@ function BookingDetail({
       </div>
 
       <PaymentFormDialog open={paying} onOpenChange={setPaying} bookingId={b.id} balanceHint={total.balance} />
+      <FinalizeDialog open={finalizing} onOpenChange={setFinalizing} booking={b} />
+      <PartyOverDialog open={partying} onOpenChange={setPartying} booking={b} />
     </div>
   );
 }
