@@ -130,6 +130,9 @@ export const useOpsStore = create<State & Actions>()(
         };
         get().upsertBooking(next);
         get().log("party_over", "booking", b.id, b.functionName, { settlementDiscount, by: userName });
+      },
+
+
 
 
 
