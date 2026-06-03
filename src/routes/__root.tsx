@@ -92,6 +92,17 @@ function RootComponent() {
   const isPrint = path.startsWith("/calendar/print");
   const isLogin = path === "/login";
 
+  // Cosmetic auth gate — redirect unauthenticated users to /login.
+  useEffect(() => {
+    if (isPrint || isLogin) return;
+    try {
+      const raw = localStorage.getItem("bika-auth-store-v1");
+      const parsed = raw ? JSON.parse(raw) : null;
+      const uid = parsed?.state?.currentUserId;
+      if (!uid) router.navigate({ to: "/login" });
+    } catch { /* ignore */ }
+  }, [path, isPrint, isLogin, router]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
