@@ -313,15 +313,24 @@ function BookingDetail({
           )}
           {tab === "versions" && (
             <Section title="Version history">
-              <ol className="space-y-2">
-                {Array.from({ length: b.versions }).map((_, i) => (
-                  <li key={i} className="flex items-center gap-3 border-b border-border/60 py-1.5">
-                    <span className="mono text-[10px] text-muted">v{b.versions - i}</span>
-                    <span className="text-[11px]">{i === 0 ? "Current" : `Edit — ${formatDate(new Date(Date.now() - (i + 1) * 86400000))}`}</span>
-                    <span className="ml-auto text-[10px] text-muted">by {["Suresh", "Anita", "Vikram"][i % 3]}</span>
+              {(!b.versionHistory || b.versionHistory.length === 0) ? (
+                <div className="text-[11px] text-muted">No snapshots yet. Click <em>Finalize</em> to save the current state as v{(b.versions ?? 0) + 1}.</div>
+              ) : (
+                <ol className="space-y-1.5">
+                  <li className="flex items-center gap-3 border border-accent/40 px-2 py-1.5 bg-surface-2/40">
+                    <span className="mono text-[10px] text-accent">v{b.versions}</span>
+                    <span className="text-[11px] font-medium">Current draft</span>
+                    <span className="ml-auto mono text-[10px] text-muted">live</span>
                   </li>
-                ))}
-              </ol>
+                  {b.versionHistory.map((v) => (
+                    <li key={v.version + v.createdAt} className="flex items-center gap-3 border-b border-border/60 py-1.5">
+                      <span className="mono text-[10px] text-muted">v{v.version}</span>
+                      <span className="text-[11px]">{v.reason || "Snapshot"}</span>
+                      <span className="ml-auto mono text-[10px] text-muted">{formatDate(new Date(v.createdAt))} · by {v.createdBy}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </Section>
           )}
           {tab === "money" && (
