@@ -1,19 +1,23 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTheme } from "@/hooks/use-theme";
 import { useEffect, useState } from "react";
+import { useAuthStore, useCan, useCurrentUser } from "@/lib/auth/store";
+import type { Permission } from "@/lib/auth/permissions";
 
-const NAV = [
-  { to: "/calendar", label: "Timeline" },
-  { to: "/bookings", label: "Bookings" },
-  { to: "/customers", label: "Customers" },
-  { to: "/enquiries", label: "Enquiries" },
-  { to: "/venues", label: "Venues" },
-  { to: "/menu", label: "Menu" },
-  { to: "/payments", label: "Payments" },
-  { to: "/reports", label: "Reports" },
-  { to: "/activity", label: "Activity" },
-  { to: "/settings", label: "Settings" },
-] as const;
+const NAV: { to: string; label: string; perm?: Permission }[] = [
+  { to: "/calendar",  label: "Timeline",  perm: "bookings.read" },
+  { to: "/bookings",  label: "Bookings",  perm: "bookings.read" },
+  { to: "/customers", label: "Customers", perm: "customers.read" },
+  { to: "/enquiries", label: "Enquiries", perm: "enquiries.read" },
+  { to: "/venues",    label: "Venues",    perm: "venues.read" },
+  { to: "/menu",      label: "Menu",      perm: "menu.read" },
+  { to: "/payments",  label: "Payments",  perm: "payments.read" },
+  { to: "/reports",   label: "Reports",   perm: "reports.read" },
+  { to: "/activity",  label: "Activity",  perm: "activity.read" },
+  { to: "/users",     label: "Users",     perm: "users.manage" },
+  { to: "/roles",     label: "Roles",     perm: "roles.manage" },
+  { to: "/settings",  label: "Settings",  perm: "settings.read" },
+];
 
 export function TopNav({ onOpenCmd }: { onOpenCmd: () => void }) {
   const { theme, toggle } = useTheme();
