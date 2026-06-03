@@ -156,6 +156,14 @@ function BookingDetail({
   const paidPct = total.grand > 0 ? Math.min(100, Math.round((total.received / total.grand) * 100)) : 0;
   const [tab, setTab] = useState<"overview" | "money" | "packs" | "halls" | "payments" | "versions">("overview");
   const [paying, setPaying] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+  const [partying, setPartying] = useState(false);
+
+  const canEdit = useCan("bookings.write");
+  const canDelete = useCan("bookings.delete");
+  const canPay = useCan("payments.write");
+  const canFinalize = useCan("bookings.finalize");
+  const canPartyOver = useCan("bookings.partyover");
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-bg">
@@ -165,29 +173,32 @@ function BookingDetail({
             <button onClick={onBack} className="lg:hidden mono text-[14px] leading-none px-1 -ml-1 text-muted hover:text-fg" aria-label="Back">‹</button>
           )}
           <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="mono text-[10px] text-muted">{b.id}</span>
             <span className="mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 border" style={{ color: tok.color, borderColor: tok.color }}>{tok.label}</span>
             <span className="mono text-[10px] text-muted">v{b.versions}</span>
+            {b.partyOver && <span className="mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 border border-confirmed text-confirmed">Party over</span>}
           </div>
           <h1 className="text-[18px] font-semibold leading-tight mt-1">{b.functionName}</h1>
           <div className="text-[11px] text-muted mt-0.5">{c.name} · {c.phone} · {formatDate(b.start)} {formatTime(b.start)}–{formatTime(b.end)}</div>
           </div>
         </div>
         <div className="flex gap-1 shrink-0 flex-wrap justify-end">
-          <button onClick={onEdit} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Edit</button>
-          <button onClick={onDelete} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border text-conflict hover:bg-surface-2">Delete</button>
-          <button onClick={() => setPaying(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono bg-accent text-accent-fg">Add Payment</button>
+          {canEdit && <button onClick={onEdit} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Edit</button>}
+          {canDelete && <button onClick={onDelete} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border text-conflict hover:bg-surface-2">Delete</button>}
+          {canFinalize && <button onClick={() => setFinalizing(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Finalize</button>}
+          {canPartyOver && !b.partyOver && <button onClick={() => setPartying(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono border border-confirmed text-confirmed hover:bg-surface-2">Party Over</button>}
+          {canPay && <button onClick={() => setPaying(true)} className="px-2 py-1 text-[10px] uppercase tracking-widest mono bg-accent text-accent-fg">Add Payment</button>}
         </div>
       </header>
 
-      <div className="px-4 border-b border-border flex gap-px shrink-0">
+      <div className="px-4 border-b border-border flex gap-px shrink-0 overflow-x-auto scrollbar-thin">
         {(["overview", "money", "packs", "halls", "payments", "versions"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-2 py-1.5 text-[10px] uppercase tracking-widest mono border-b-2 ${tab === t ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"}`}
-          >{t}</button>
+            className={`px-2 py-1.5 text-[10px] uppercase tracking-widest mono border-b-2 whitespace-nowrap ${tab === t ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"}`}
+          >{t === "versions" ? `History · ${b.versionHistory?.length ?? 0}` : t}</button>
         ))}
       </div>
 
