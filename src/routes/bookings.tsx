@@ -3,11 +3,14 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
 import { useBookings, useCustomerLookup, useCustomers, bookingTotal, staticHallById as hallById } from "@/lib/mock/hooks";
 import { useOpsStore } from "@/lib/api/store";
+import { useCan } from "@/lib/auth/store";
 import { formatDate, formatINR, formatINRShort, formatTime, relativeDur } from "@/lib/format";
 import { statusToken } from "@/lib/calendar-utils";
 import type { Booking } from "@/lib/mock/types";
 import { BookingFormDialog } from "@/components/forms/BookingFormDialog";
 import { PaymentFormDialog } from "@/components/forms/PaymentFormDialog";
+import { FinalizeDialog } from "@/components/forms/FinalizeDialog";
+import { PartyOverDialog } from "@/components/forms/PartyOverDialog";
 
 const searchSchema = z.object({ id: z.string().optional(), status: z.string().optional(), q: z.string().optional() });
 
