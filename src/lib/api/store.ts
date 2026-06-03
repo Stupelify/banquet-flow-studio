@@ -38,6 +38,8 @@ type State = {
 type Actions = {
   upsertBooking: (b: Booking, opts?: { isNew?: boolean }) => void;
   deleteBooking: (id: string) => void;
+  finalizeBooking: (b: Booking, opts: { reason?: string; userName: string }) => void;
+  partyOverBooking: (b: Booking, opts: { settlementDiscount?: number; notes?: string; userName: string }) => void;
   upsertCustomer: (c: Customer, opts?: { isNew?: boolean }) => void;
   deleteCustomer: (id: string) => void;
   addPayment: (p: BookingPayment) => void;
@@ -99,6 +101,40 @@ export const useOpsStore = create<State & Actions>()(
         }));
         get().log("delete", "booking", id, null);
       },
+
+      finalizeBooking: (b, { reason, userName }) => {
+        const snapshot = {
+          version: (b.versions ?? 0) + 1,
+          createdAt: new Date().toISOString(),
+          createdBy: userName,
+          reason,
+          data: JSON.parse(JSON.stringify(b, (_k, v) => (v instanceof Date ? v.toISOString() : v))),
+        };
+        const next: Booking = {
+          ...b,
+          versions: (b.versions ?? 0) + 1,
+          versionHistory: [snapshot, ...(b.versionHistory ?? [])],
+        };
+        get().upsertBooking(next);
+        get().log("finalize", "booking", b.id, b.functionName, { version: snapshot.version, reason });
+      },
+
+      partyOverBooking: (b, { settlementDiscount, notes, userName }) => {
+        const next: Booking = {
+          ...b,
+          partyOver: true,
+          partyOverAt: new Date(),
+          partyOverNotes: notes,
+          settlementDiscount: settlementDiscount ?? b.settlementDiscount ?? 0,
+          status: "confirmed",
+        };
+        get().upsertBooking(next);
+        get().log("party_over", "booking", b.id, b.functionName, { settlementDiscount, by: userName });
+      },
+
+
+
+
 
       upsertCustomer: (c, opts) => {
         set((s) => {
