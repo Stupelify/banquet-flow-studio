@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { z } from "zod";
 import { useBookings, useCustomerLookup, useCustomers, bookingTotal, staticHallById as hallById } from "@/lib/mock/hooks";
 import { useOpsStore } from "@/lib/api/store";
