@@ -1,47 +1,52 @@
 /**
- * Booking form — sectioned RHF + zod with multi-meal-pack accordion,
- * per-hall charges, additional items, % vs amount discounts, and a sticky
- * live billing panel powered by `computeBill()`.
+ * Booking form — visual layout modelled after the Bika reference screenshot.
  *
- * Layout:
- *   • Desktop (sm+): centered dialog, 3-col body + 1-col sticky billing rail.
- *   • Phone:         full-screen sheet, scroll body, sticky footer bar with
- *                    grand-total + due chip; tap to expand billing details.
+ *   ┌─ Booking Form ───────────────────────────────────────────── × ┐
+ *   │  Booking Details                                              │
+ *   │  Primary Customer · Priority · Function Date                  │
+ *   │  Function Type · Referred By · Second Customer                │
+ *   │  [ ] Pencil Booking — temporary hall hold                     │
+ *   │                                                                │
+ *   │  Meal table (Breakfast / Lunch / Hi-Tea / Dinner)             │
+ *   │  cols: Meal · Banquet · Hall · Time · Menu · Pax · Rate ·     │
+ *   │        Hall Rate · Amount                                      │
+ *   │                                                                │
+ *   │  Total strip (mint) · Disc% · Discount · Net amount            │
+ *   │  Extra items · Grand total                                    │
+ *   │                                                                │
+ *   │  Cancel · Submit                          [Finalize Version]   │
+ *   └────────────────────────────────────────────────────────────────┘
  *
- * Slots are stored lowercase (`breakfast` | `lunch` | `hi-tea` | `dinner`)
- * to match the Bika enum; we render them via `mealSlotLabel()`.
+ * The Bika meal-slot enum is stored lowercase (`breakfast` etc.) — see
+ * `MealSlotId` — and the four meal rows are always rendered; toggling the
+ * pill at row-start adds/removes the matching pack in the form state.
  */
-import { useEffect, useMemo, useState } from "react";
-import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useForm, useFieldArray, useWatch, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { HALLS, VENUES, BOOKINGS } from "@/lib/mock/data";
+import { HALLS, VENUES } from "@/lib/mock/data";
 import { useOpsStore, newId } from "@/lib/api/store";
+import { useCurrentUser } from "@/lib/auth/store";
 import type { Booking, MealPack, MealSlotId } from "@/lib/mock/types";
 import { MEAL_SLOT_IDS, mealSlotLabel } from "@/lib/mock/types";
 import { computeBill } from "@/lib/api/billing";
-import { formatINR, formatINRShort } from "@/lib/format";
+import { formatINR } from "@/lib/format";
 
 /* ───────────────────────────── schema ────────────────────────────── */
 
 const packSchema = z.object({
   mealSlot: z.enum(["breakfast", "lunch", "hi-tea", "dinner"]),
-  packName: z.string().trim().max(80).optional(),
-  menuName: z.string().trim().min(1, "Menu name required").max(120),
+  enabled: z.boolean(),
+  venueId: z.string().optional().or(z.literal("")),
+  hallId: z.string().optional().or(z.literal("")),
+  menuName: z.string().max(120).optional().or(z.literal("")),
   plates: z.coerce.number().int().min(0).max(20000),
   ratePerPlate: z.coerce.number().min(0),
-  setupCost: z.coerce.number().min(0),
-  extraCharges: z.coerce.number().min(0),
   hallRate: z.coerce.number().min(0),
   startTime: z.string().optional().or(z.literal("")),
   endTime: z.string().optional().or(z.literal("")),
-  notes: z.string().max(500).optional(),
-});
-
-const hallSchema = z.object({
-  hallId: z.string().min(1),
-  charges: z.coerce.number().min(0),
 });
 
 const additionalSchema = z.object({
@@ -51,114 +56,109 @@ const additionalSchema = z.object({
 });
 
 const schema = z.object({
-  functionName: z.string().trim().min(1, "Function name is required").max(120),
+  customerId: z.string().min(1, "Select a primary customer"),
+  secondCustomerId: z.string().optional().or(z.literal("")),
+  referredById: z.string().optional().or(z.literal("")),
+  priority: z.coerce.number().min(0).max(99),
   functionType: z.string().trim().min(1, "Function type is required").max(60),
-  customerId: z.string().min(1, "Select a customer"),
-  start: z.string().min(1, "Start required"),
-  end: z.string().min(1, "End required"),
-  expectedGuests: z.coerce.number().int().min(1).max(20000),
-  confirmedGuests: z.coerce.number().int().min(0).max(20000),
-  status: z.enum(["confirmed", "pencil", "quotation", "enquiry", "cancelled"]),
-  halls: z.array(hallSchema).min(1, "Pick at least one hall"),
-  packs: z.array(packSchema),
+  functionDate: z.string().min(1, "Function date is required"),
+  isPencilBooking: z.boolean(),
+  packs: z.array(packSchema).length(4),
   additionalItems: z.array(additionalSchema),
-  // discounts — % takes precedence over amount when both > 0
   discountAmount: z.coerce.number().min(0),
   discountPercentage: z.coerce.number().min(0).max(100),
-  discountAmount2nd: z.coerce.number().min(0),
-  discountPercentage2nd: z.coerce.number().min(0).max(100),
-  advanceRequired: z.coerce.number().min(0),
-  isQuotation: z.boolean(),
-  isPencilBooking: z.boolean(),
-  pencilExpiresAt: z.string().optional().or(z.literal("")),
-  notes: z.string().max(2000).optional(),
-  internalNotes: z.string().max(2000).optional(),
-}).refine((v) => new Date(v.end) > new Date(v.start), {
-  message: "End must be after start", path: ["end"],
 });
 
 type FormValues = z.infer<typeof schema>;
 
 /* ───────────────────────────── helpers ────────────────────────────── */
 
-const toLocalInput = (d: Date) => {
+const ymd = (d: Date) => {
   const tz = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return tz.toISOString().slice(0, 16);
+  return tz.toISOString().slice(0, 10);
 };
 
-const blankPack = (slot: MealSlotId): z.infer<typeof packSchema> => ({
+const DEFAULT_TIMES: Record<MealSlotId, { start: string; end: string }> = {
+  breakfast: { start: "08:00", end: "10:00" },
+  lunch:     { start: "12:00", end: "15:00" },
+  "hi-tea":  { start: "16:00", end: "18:00" },
+  dinner:    { start: "19:00", end: "22:00" },
+};
+
+const SLOT_BAR: Record<MealSlotId, string> = {
+  breakfast: "bg-[#f59e0b]",
+  lunch:     "bg-[#10b981]",
+  "hi-tea":  "bg-[#06b6d4]",
+  dinner:    "bg-[#6366f1]",
+};
+
+const blankRow = (slot: MealSlotId): z.infer<typeof packSchema> => ({
   mealSlot: slot,
-  packName: "",
-  menuName: `${mealSlotLabel(slot)} menu`,
-  plates: 100,
-  ratePerPlate: 600,
-  setupCost: 0,
-  extraCharges: 0,
+  enabled: false,
+  venueId: "",
+  hallId: "",
+  menuName: "",
+  plates: 0,
+  ratePerPlate: 0,
   hallRate: 0,
-  startTime: "",
-  endTime: "",
-  notes: "",
+  startTime: DEFAULT_TIMES[slot].start,
+  endTime: DEFAULT_TIMES[slot].end,
 });
 
 const defaults = (): FormValues => ({
-  functionName: "",
-  functionType: "Reception",
   customerId: "",
-  start: toLocalInput(new Date()),
-  end: toLocalInput(new Date(Date.now() + 4 * 3_600_000)),
-  expectedGuests: 100,
-  confirmedGuests: 0,
-  status: "confirmed",
-  halls: [],
-  packs: [],
+  secondCustomerId: "",
+  referredById: "",
+  priority: 0,
+  functionType: "",
+  functionDate: ymd(new Date()),
+  isPencilBooking: false,
+  packs: MEAL_SLOT_IDS.map(blankRow),
   additionalItems: [],
   discountAmount: 0,
   discountPercentage: 0,
-  discountAmount2nd: 0,
-  discountPercentage2nd: 0,
-  advanceRequired: 0,
-  isQuotation: false,
-  isPencilBooking: false,
-  pencilExpiresAt: "",
-  notes: "",
-  internalNotes: "",
 });
 
-const fromBooking = (b: Booking): FormValues => ({
-  functionName: b.functionName,
-  functionType: b.functionType,
-  customerId: b.customerId,
-  start: toLocalInput(b.start),
-  end: toLocalInput(b.end),
-  expectedGuests: b.expectedGuests,
-  confirmedGuests: b.confirmedGuests,
-  status: b.status,
-  halls: b.halls.length ? b.halls : b.hallIds.map((hallId) => ({ hallId, charges: 0 })),
-  packs: b.packs.map((p) => ({
-    mealSlot: p.mealSlot,
-    packName: p.packName ?? "",
-    menuName: p.menuName,
-    plates: p.plates,
-    ratePerPlate: p.ratePerPlate,
-    setupCost: p.setupCost,
-    extraCharges: p.extraCharges,
-    hallRate: p.hallRate,
-    startTime: p.startTime ?? "",
-    endTime: p.endTime ?? "",
-    notes: p.notes ?? "",
-  })),
-  additionalItems: b.additionalItems,
-  discountAmount: b.discountAmount,
-  discountPercentage: b.discountPercentage,
-  discountAmount2nd: b.discountAmount2nd,
-  discountPercentage2nd: b.discountPercentage2nd,
-  advanceRequired: b.advanceRequired,
-  isQuotation: b.isQuotation,
-  isPencilBooking: b.isPencilBooking,
-  pencilExpiresAt: b.pencilExpiresAt ? toLocalInput(b.pencilExpiresAt) : "",
-  notes: b.notes ?? "",
-  internalNotes: b.internalNotes ?? "",
-});
+const fromBooking = (b: Booking): FormValues => {
+  const byId = new Map(b.packs.map((p) => [p.mealSlot, p] as const));
+  const rowVenueFor = (p: MealPack | undefined): string => {
+    const hall = HALLS.find((h) => p?.items && false /* placeholder */); // never
+    void hall;
+    return "";
+  };
+  void rowVenueFor;
+  // Try to derive venue/hall from booking-level halls for legacy data.
+  const firstHall = b.halls[0]?.hallId ?? b.hallIds[0] ?? "";
+  const firstVenue = HALLS.find((h) => h.id === firstHall)?.venueId ?? "";
+  return {
+    customerId: b.customerId,
+    secondCustomerId: b.secondCustomerId ?? "",
+    referredById: b.referredById ?? "",
+    priority: b.priority ?? 0,
+    functionType: b.functionType,
+    functionDate: ymd(b.start),
+    isPencilBooking: b.isPencilBooking,
+    packs: MEAL_SLOT_IDS.map((slot) => {
+      const p = byId.get(slot);
+      if (!p) return blankRow(slot);
+      return {
+        mealSlot: slot,
+        enabled: true,
+        venueId: firstVenue,
+        hallId: firstHall,
+        menuName: p.menuName ?? "",
+        plates: p.plates,
+        ratePerPlate: p.ratePerPlate,
+        hallRate: p.hallRate,
+        startTime: p.startTime ?? DEFAULT_TIMES[slot].start,
+        endTime: p.endTime ?? DEFAULT_TIMES[slot].end,
+      };
+    }),
+    additionalItems: b.additionalItems,
+    discountAmount: b.discountAmount,
+    discountPercentage: b.discountPercentage,
+  };
+};
 
 /* ───────────────────────────── dialog ────────────────────────────── */
 
@@ -171,6 +171,8 @@ export function BookingFormDialog({
   customers: { id: string; name: string; phone: string }[];
 }) {
   const upsertBooking = useOpsStore((s) => s.upsertBooking);
+  const finalizeBooking = useOpsStore((s) => s.finalizeBooking);
+  const user = useCurrentUser();
   const isNew = !booking;
 
   const form = useForm<FormValues>({
@@ -182,384 +184,436 @@ export function BookingFormDialog({
   useEffect(() => {
     if (!open) return;
     form.reset(booking ? fromBooking(booking) : { ...defaults(), customerId: customers[0]?.id ?? "" });
-    setOpenPack(null);
   }, [open, booking, customers, form]);
 
-  const [openPack, setOpenPack] = useState<MealSlotId | null>(null);
-  const [showBill, setShowBill] = useState(false);
-
   const onSubmit = (v: FormValues) => {
-    const packs: MealPack[] = v.packs.map((p) => ({
+    const activeRows = v.packs.filter((p) => p.enabled);
+    const packs: MealPack[] = activeRows.map((p) => ({
       mealSlot: p.mealSlot,
       slot: mealSlotLabel(p.mealSlot),
-      packName: p.packName || undefined,
-      menuName: p.menuName,
+      menuName: p.menuName || `${mealSlotLabel(p.mealSlot)} menu`,
       plates: p.plates,
       ratePerPlate: p.ratePerPlate,
-      setupCost: p.setupCost,
-      extraCharges: p.extraCharges,
+      setupCost: 0,
+      extraCharges: 0,
       hallRate: p.hallRate,
       startTime: p.startTime || undefined,
       endTime: p.endTime || undefined,
       items: [],
-      notes: p.notes || undefined,
     }));
-    const start = new Date(v.start);
-    const end = new Date(v.end);
-    const hallCharges = v.halls.reduce((s, h) => s + h.charges, 0);
-    const additionalItems = v.additionalItems;
+    const allHallIds = Array.from(new Set(activeRows.map((p) => p.hallId).filter(Boolean) as string[]));
+    const halls = allHallIds.map((id) => ({ hallId: id, charges: 0 }));
+    const start = new Date(`${v.functionDate}T${activeRows[0]?.startTime || "08:00"}:00`);
+    const end = new Date(`${v.functionDate}T${activeRows[activeRows.length - 1]?.endTime || "22:00"}:00`);
+    const guestMax = Math.max(0, ...activeRows.map((p) => p.plates));
     const next: Booking = {
       ...(booking ?? {}),
       id: booking?.id ?? newId("BK"),
       source: booking?.source ?? "in-app",
-      functionName: v.functionName,
+      functionName: `${customers.find((c) => c.id === v.customerId)?.name ?? ""} · ${v.functionType}`.trim(),
       functionType: v.functionType,
       customerId: v.customerId,
+      secondCustomerId: v.secondCustomerId || undefined,
+      referredById: v.referredById || undefined,
+      priority: v.priority || undefined,
       start,
       end,
-      status: v.status,
-      halls: v.halls,
-      hallIds: v.halls.map((h) => h.hallId),
-      hallCharges,
-      expectedGuests: v.expectedGuests,
-      confirmedGuests: v.confirmedGuests,
+      status: v.isPencilBooking ? "pencil" : (booking?.status ?? "confirmed"),
+      halls,
+      hallIds: allHallIds,
+      hallCharges: 0,
+      expectedGuests: guestMax || (booking?.expectedGuests ?? 0),
+      confirmedGuests: booking?.confirmedGuests ?? 0,
       packs,
-      additionalItems,
-      extras: additionalItems.map((x) => ({ label: x.description, amount: x.charges * x.quantity })),
+      additionalItems: v.additionalItems,
+      extras: v.additionalItems.map((x) => ({ label: x.description, amount: x.charges * x.quantity })),
       discountAmount: v.discountAmount,
       discountPercentage: v.discountPercentage,
-      discountAmount2nd: v.discountAmount2nd,
-      discountPercentage2nd: v.discountPercentage2nd,
+      discountAmount2nd: booking?.discountAmount2nd ?? 0,
+      discountPercentage2nd: booking?.discountPercentage2nd ?? 0,
       discount1: v.discountAmount,
-      discount2Pct: v.discountPercentage2nd,
+      discount2Pct: 0,
       settlementDiscount: booking?.settlementDiscount ?? 0,
       taxPct: booking?.taxPct ?? 0,
-      advanceRequired: v.advanceRequired,
-      isQuotation: v.isQuotation,
+      advanceRequired: booking?.advanceRequired ?? 0,
+      isQuotation: booking?.isQuotation ?? false,
       isPencilBooking: v.isPencilBooking,
-      pencilExpiresAt: v.pencilExpiresAt ? new Date(v.pencilExpiresAt) : undefined,
+      pencilExpiresAt: booking?.pencilExpiresAt,
       payments: booking?.payments ?? [],
-      notes: v.notes || undefined,
-      internalNotes: v.internalNotes || undefined,
-      versions: (booking?.versions ?? 0) + (isNew ? 1 : 1),
+      notes: booking?.notes,
+      internalNotes: booking?.internalNotes,
+      versions: (booking?.versions ?? 0) + 1,
     } as Booking;
     upsertBooking(next, { isNew });
-    onOpenChange(false);
+    return next;
   };
+
+  const handleSubmit = form.handleSubmit((v) => {
+    onSubmit(v);
+    onOpenChange(false);
+  });
+
+  const handleFinalize = form.handleSubmit((v) => {
+    const saved = onSubmit(v);
+    finalizeBooking(saved, { reason: "Finalize from booking form", userName: user?.name ?? "You" });
+    onOpenChange(false);
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="max-w-full h-[100dvh] rounded-none p-0 sm:max-w-5xl sm:h-[90vh] sm:rounded-sm bg-surface border-border flex flex-col gap-0"
-      >
+      <DialogContent className="max-w-full h-[100dvh] sm:h-[95vh] sm:max-w-[1200px] rounded-none sm:rounded-lg p-0 bg-surface border-border flex flex-col gap-0 overflow-hidden">
         <DialogTitle className="sr-only">{isNew ? "New booking" : `Edit ${booking?.id}`}</DialogTitle>
-        <Header isNew={isNew} bookingId={booking?.id} />
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] min-h-0"
-        >
-          <div className="overflow-y-auto scrollbar-thin p-3 sm:p-4 space-y-4 pb-32 lg:pb-4">
-            <FunctionSection form={form} customers={customers} />
-            <HallsSection form={form} />
-            <PacksSection form={form} openPack={openPack} setOpenPack={setOpenPack} />
-            <ExtrasSection form={form} />
-            <DiscountsSection form={form} />
-            <NotesSection form={form} />
+
+        <header className="shrink-0 px-4 sm:px-6 py-3 border-b border-border flex items-center justify-between bg-surface">
+          <div>
+            <h2 className="text-[18px] font-semibold tracking-tight">Booking Form</h2>
+            {!isNew && <div className="mono text-[10px] uppercase tracking-widest text-faint">{booking?.id}</div>}
           </div>
+        </header>
 
-          {/* Desktop sticky billing rail */}
-          <aside className="hidden lg:flex flex-col border-l border-border bg-surface-2/30 overflow-y-auto scrollbar-thin">
-            <BillingPanel form={form} />
-            <FormFooter onCancel={() => onOpenChange(false)} isNew={isNew} />
-          </aside>
-
-          {/* Phone sticky bottom bar */}
-          <MobileFooter
-            form={form}
-            isNew={isNew}
-            onCancel={() => onOpenChange(false)}
-            showBill={showBill}
-            setShowBill={setShowBill}
-          />
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="p-4 sm:p-6 space-y-5">
+            <BookingDetailsCard form={form} customers={customers} />
+            <MealTable form={form} />
+            <TotalsStrip form={form} />
+            <ExtrasSection form={form} />
+            <GrandTotalRow form={form} />
+          </div>
         </form>
+
+        <footer className="shrink-0 border-t border-border bg-surface px-4 sm:px-6 py-3 flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="h-10 px-4 text-[12px] font-medium border border-border bg-surface hover:bg-surface-2 rounded-md"
+          >Cancel</button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="h-10 px-5 text-[12px] font-medium bg-confirmed text-white rounded-md hover:opacity-90 inline-flex items-center gap-2"
+          >
+            <span aria-hidden>💾</span> Submit
+          </button>
+          <div className="ml-auto">
+            <button
+              type="button"
+              disabled={isNew}
+              onClick={handleFinalize}
+              className="h-10 px-5 text-[12px] font-medium bg-confirmed text-white rounded-md hover:opacity-90 inline-flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={isNew ? "Save the booking first to finalize a version" : "Snapshot the current state as a new version"}
+            >
+              <span aria-hidden>✓</span> Finalize Version
+            </button>
+          </div>
+        </footer>
       </DialogContent>
     </Dialog>
   );
 }
 
-/* ───────────────────────────── header ────────────────────────────── */
-
-function Header({ isNew, bookingId }: { isNew: boolean; bookingId?: string }) {
-  return (
-    <header className="shrink-0 px-3 sm:px-4 py-2.5 border-b border-border flex items-center justify-between">
-      <div className="min-w-0">
-        <div className="mono text-[10px] uppercase tracking-widest text-faint">
-          {isNew ? "New booking" : `Edit booking`}
-        </div>
-        <div className="mono text-[11px] text-muted truncate">{bookingId ?? "auto-id on save"}</div>
-      </div>
-    </header>
-  );
-}
-
-/* ─────────────────────────── sections ────────────────────────────── */
+/* ─────────────────────────── booking details ────────────────────────────── */
 
 type F = ReturnType<typeof useForm<FormValues>>;
 
-function FunctionSection({ form, customers }: { form: F; customers: { id: string; name: string; phone: string }[] }) {
-  const { register, formState: { errors }, control } = form;
-  const isPencil = useWatch({ control, name: "isPencilBooking" });
+function BookingDetailsCard({ form, customers }: { form: F; customers: { id: string; name: string; phone: string }[] }) {
+  const { register, control, formState: { errors }, setValue } = form;
+  const customerId = useWatch({ control, name: "customerId" });
+  const secondCustomerId = useWatch({ control, name: "secondCustomerId" });
+  const referredById = useWatch({ control, name: "referredById" });
   return (
-    <Section title="Function">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <Field label="Function name" err={errors.functionName?.message}>
-          <input className={inp} placeholder="e.g. Sharma Reception" {...register("functionName")} />
+    <section className="border border-border bg-surface rounded-lg p-4 sm:p-5 space-y-4">
+      <h3 className="text-[15px] font-semibold tracking-tight">Booking Details</h3>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_minmax(80px,0.4fr)_1fr] gap-3">
+        <Field label="Primary Customer" required err={errors.customerId?.message}>
+          <div className="flex items-center gap-2">
+            <CustomerSearch value={customerId} onChange={(id) => setValue("customerId", id, { shouldValidate: true })} customers={customers} placeholder="Type customer name or number" />
+            <button type="button" className="shrink-0 h-10 px-3 text-[12px] border border-border rounded-full bg-surface hover:bg-surface-2 inline-flex items-center gap-1">
+              <span className="text-confirmed">+</span> Add Customer
+            </button>
+          </div>
         </Field>
-        <Field label="Function type" err={errors.functionType?.message}>
-          <input className={inp} placeholder="Wedding, Birthday…" {...register("functionType")} />
+        <Field label="Priority">
+          <input type="number" min={0} max={99} className={pillInp + " text-center"} {...register("priority")} />
         </Field>
-        <Field label="Customer" err={errors.customerId?.message}>
-          <select className={inp} {...register("customerId")}>
-            <option value="">— Select —</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} · {c.phone}</option>
+        <Field label="Function Date" required err={errors.functionDate?.message}>
+          <input type="date" className={pillInp} {...register("functionDate")} />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Field label="Function Type" required err={errors.functionType?.message}>
+          <select className={pillInp} {...register("functionType")}>
+            <option value="">Select function type</option>
+            {["Wedding", "Reception", "Engagement", "Mehndi", "Sangeet", "Tilak", "Birthday", "Anniversary", "Corporate", "Other"].map((t) => (
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
         </Field>
-        <Field label="Status">
-          <select className={inp} {...register("status")}>
-            <option value="confirmed">Confirmed</option>
-            <option value="pencil">Pencil</option>
-            <option value="quotation">Quotation</option>
-            <option value="enquiry">Enquiry</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+        <Field label="Referred By">
+          <CustomerSearch value={referredById ?? ""} onChange={(id) => setValue("referredById", id)} customers={customers} placeholder="Type customer name or number" allowEmpty />
         </Field>
-        <Field label="Start" err={errors.start?.message}>
-          <input type="datetime-local" className={inp} {...register("start")} />
-        </Field>
-        <Field label="End" err={errors.end?.message}>
-          <input type="datetime-local" className={inp} {...register("end")} />
-        </Field>
-        <Field label="Expected guests" err={errors.expectedGuests?.message}>
-          <input type="number" inputMode="numeric" className={inp} {...register("expectedGuests")} />
-        </Field>
-        <Field label="Confirmed guests" err={errors.confirmedGuests?.message}>
-          <input type="number" inputMode="numeric" className={inp} {...register("confirmedGuests")} />
-        </Field>
-        <Field label="Flags" className="sm:col-span-2">
-          <div className="flex flex-wrap gap-2">
-            <Toggle control={control} name="isQuotation" label="Quotation only" />
-            <Toggle control={control} name="isPencilBooking" label="Pencil booking" />
-            {isPencil && (
-              <label className="flex items-center gap-1.5">
-                <span className="text-[10px] mono uppercase tracking-widest text-muted">Expires</span>
-                <input type="datetime-local" className={inp + " w-44"} {...register("pencilExpiresAt")} />
-              </label>
-            )}
-          </div>
+        <Field label="Second Customer">
+          <CustomerSearch value={secondCustomerId ?? ""} onChange={(id) => setValue("secondCustomerId", id)} customers={customers} placeholder="Type customer name or number" allowEmpty />
         </Field>
       </div>
-    </Section>
+
+      <Controller
+        control={control}
+        name="isPencilBooking"
+        render={({ field }) => (
+          <label className={`flex items-center gap-2 px-3 py-2.5 rounded-md border cursor-pointer transition-colors ${field.value ? "border-confirmed bg-confirmed/5" : "border-border bg-surface-2/40 hover:bg-surface-2"}`}>
+            <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} className="size-4" />
+            <span className="text-confirmed" aria-hidden>✎</span>
+            <span className="text-[13px] font-medium">Pencil Booking</span>
+            <span className="text-[12px] text-muted">— temporary hall hold</span>
+          </label>
+        )}
+      />
+    </section>
   );
 }
 
-function HallsSection({ form }: { form: F }) {
-  const { control, formState: { errors }, register, getValues, setValue, watch } = form;
-  const { fields, append, remove } = useFieldArray({ control, name: "halls" });
-  const start = watch("start");
-  const end = watch("end");
-
-  const selectedIds = new Set(fields.map((f) => f.hallId));
-
-  const clashes = useMemo(() => {
-    if (!start || !end) return new Set<string>();
-    const s = +new Date(start);
-    const e = +new Date(end);
-    const out = new Set<string>();
-    for (const b of BOOKINGS) {
-      const bs = +b.start, be = +b.end;
-      if (be <= s || bs >= e) continue;
-      for (const id of b.hallIds) out.add(id);
-    }
-    return out;
-  }, [start, end]);
-
-  return (
-    <Section
-      title={`Halls (${fields.length})`}
-      hint={errors.halls?.message as string | undefined}
-    >
-      {/* hall picker */}
-      <div className="border border-border bg-bg max-h-44 overflow-y-auto scrollbar-thin">
-        {VENUES.map((v) => (
-          <div key={v.id} className="border-b border-border/60 last:border-0">
-            <div className="px-2 py-1 mono text-[10px] uppercase tracking-widest text-muted bg-surface-2/40">{v.name}</div>
-            {HALLS.filter((h) => h.venueId === v.id).map((h) => {
-              const checked = selectedIds.has(h.id);
-              const clash = clashes.has(h.id);
-              return (
-                <label key={h.id} className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-surface-2 text-[11px] min-h-[36px]">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        append({ hallId: h.id, charges: h.basePrice ?? 0 });
-                      } else {
-                        const idx = getValues("halls").findIndex((x) => x.hallId === h.id);
-                        if (idx >= 0) remove(idx);
-                      }
-                    }}
-                  />
-                  <span className="truncate">{h.name}</span>
-                  {clash && !checked && (
-                    <span className="ml-1 mono text-[9px] uppercase tracking-widest text-conflict">clash</span>
-                  )}
-                  <span className="ml-auto mono text-[10px] text-muted shrink-0">cap {h.capacity}</span>
-                </label>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* selected halls with charges */}
-      {fields.length > 0 && (
-        <div className="mt-2 border border-border">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-2 py-1 mono text-[9px] uppercase tracking-widest text-faint bg-surface-2/40">
-            <span>Hall</span><span>Charge ₹</span><span></span>
-          </div>
-          {fields.map((f, i) => {
-            const hall = HALLS.find((h) => h.id === f.hallId);
-            return (
-              <div key={f.id} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center px-2 py-1.5 border-t border-border/60">
-                <span className="text-[12px] truncate">{hall?.name ?? f.hallId}</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  className={inp + " w-28 text-right"}
-                  {...register(`halls.${i}.charges`)}
-                  onChange={(e) => setValue(`halls.${i}.charges`, Number(e.target.value) || 0, { shouldValidate: true })}
-                />
-                <button type="button" onClick={() => remove(i)} className="text-muted hover:text-conflict text-[11px] mono uppercase tracking-widest px-1">×</button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Section>
-  );
-}
-
-function PacksSection({
-  form, openPack, setOpenPack,
+function CustomerSearch({
+  value, onChange, customers, placeholder, allowEmpty,
 }: {
-  form: F;
-  openPack: MealSlotId | null;
-  setOpenPack: (s: MealSlotId | null) => void;
+  value: string;
+  onChange: (id: string) => void;
+  customers: { id: string; name: string; phone: string }[];
+  placeholder: string;
+  allowEmpty?: boolean;
 }) {
-  const { control, register, formState: { errors } } = form;
-  const { fields, append, remove } = useFieldArray({ control, name: "packs" });
-  const packs = useWatch({ control, name: "packs" });
+  // Lightweight: a styled select for now; native search keeps it phone-friendly.
+  return (
+    <div className="relative flex-1 min-w-0">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-[13px]">⌕</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={pillInp + " pl-8 pr-3 appearance-none"}
+      >
+        <option value="">{placeholder}</option>
+        {allowEmpty && value && <option value="">— Clear —</option>}
+        {customers.map((c) => (
+          <option key={c.id} value={c.id}>{c.name} · {c.phone}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
-  const usedSlots = new Set((fields ?? []).map((f) => f.mealSlot as MealSlotId));
-  const availableSlots = MEAL_SLOT_IDS.filter((s) => !usedSlots.has(s));
+/* ──────────────────────────── meal table ────────────────────────────── */
+
+function MealTable({ form }: { form: F }) {
+  const { control, register, setValue } = form;
+  const packs = useWatch({ control, name: "packs" }) ?? [];
 
   return (
-    <Section title={`Meal packs (${fields.length})`} hint={errors.packs?.message as string | undefined}>
-      {fields.length === 0 && (
-        <div className="text-[11px] text-muted mb-2">No packs yet. Add one for each meal you'll serve.</div>
-      )}
-      <div className="space-y-1.5">
-        {fields.map((field, i) => {
-          const slot = field.mealSlot as MealSlotId;
-          const p = packs?.[i];
-          const subtotal = p
-            ? (p.plates ?? 0) * (p.ratePerPlate ?? 0) + (p.setupCost ?? 0) + (p.extraCharges ?? 0) + (p.hallRate ?? 0)
-            : 0;
-          const isOpen = openPack === slot;
-          return (
-            <div key={field.id} className="border border-border bg-bg">
-              <button
-                type="button"
-                onClick={() => setOpenPack(isOpen ? null : slot)}
-                className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-surface-2 min-h-[40px]"
-              >
-                <span className="mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 border border-border text-fg">
-                  {mealSlotLabel(slot)}
-                </span>
-                <span className="text-[11px] text-muted truncate min-w-0">
-                  {p?.menuName || "—"} · {p?.plates ?? 0} pax
-                </span>
-                <span className="ml-auto mono text-[11px] font-medium shrink-0">{formatINRShort(subtotal)}</span>
-                <span className="mono text-[10px] text-muted shrink-0">{isOpen ? "▴" : "▾"}</span>
-              </button>
-              {isOpen && (
-                <div className="border-t border-border p-2.5 space-y-2.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Field label="Pack name (optional)">
-                      <input className={inp} placeholder="e.g. Veg Premium" {...register(`packs.${i}.packName`)} />
-                    </Field>
-                    <Field label="Menu name" err={errors.packs?.[i]?.menuName?.message}>
-                      <input className={inp} {...register(`packs.${i}.menuName`)} />
-                    </Field>
-                    <Field label="Plates (PAX)">
-                      <input type="number" inputMode="numeric" className={inp} {...register(`packs.${i}.plates`)} />
-                    </Field>
-                    <Field label="Rate / plate">
-                      <input type="number" inputMode="numeric" className={inp} {...register(`packs.${i}.ratePerPlate`)} />
-                    </Field>
-                    <Field label="Setup cost">
-                      <input type="number" inputMode="numeric" className={inp} {...register(`packs.${i}.setupCost`)} />
-                    </Field>
-                    <Field label="Extra charges">
-                      <input type="number" inputMode="numeric" className={inp} {...register(`packs.${i}.extraCharges`)} />
-                    </Field>
-                    <Field label="Hall rate (per pack)">
-                      <input type="number" inputMode="numeric" className={inp} {...register(`packs.${i}.hallRate`)} />
-                    </Field>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Field label="Start">
-                        <input type="time" className={inp} {...register(`packs.${i}.startTime`)} />
-                      </Field>
-                      <Field label="End">
-                        <input type="time" className={inp} {...register(`packs.${i}.endTime`)} />
-                      </Field>
-                    </div>
-                  </div>
-                  <Field label="Pack notes">
-                    <textarea rows={2} className={inp} {...register(`packs.${i}.notes`)} />
-                  </Field>
-                  <div className="flex items-center justify-between">
-                    <span className="mono text-[10px] text-muted">Pack subtotal</span>
-                    <span className="mono text-[12px] font-medium">{formatINR(subtotal)}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => { remove(i); if (openPack === slot) setOpenPack(null); }}
-                    className="text-[10px] mono uppercase tracking-widest text-conflict hover:underline"
-                  >Remove pack</button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+    <section className="border border-border rounded-lg overflow-hidden bg-surface">
+      <div className="overflow-x-auto scrollbar-thin">
+        <table className="w-full min-w-[1000px] text-[12px]">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-widest text-muted mono border-b border-border">
+              <th className="text-left font-normal px-3 py-2 w-[140px]">Meal</th>
+              <th className="text-left font-normal px-2 py-2 w-[140px]">Banquet</th>
+              <th className="text-left font-normal px-2 py-2 w-[140px]">Hall</th>
+              <th className="text-left font-normal px-2 py-2 w-[180px]">Time</th>
+              <th className="text-left font-normal px-2 py-2">Menu</th>
+              <th className="text-right font-normal px-2 py-2 w-[80px]">Pax</th>
+              <th className="text-right font-normal px-2 py-2 w-[100px]">Rate/Plate</th>
+              <th className="text-right font-normal px-2 py-2 w-[100px]">Hall Rate</th>
+              <th className="text-right font-normal px-3 py-2 w-[110px]">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MEAL_SLOT_IDS.map((slot, i) => (
+              <MealRow
+                key={slot}
+                index={i}
+                slot={slot}
+                row={packs[i]}
+                register={register}
+                control={control}
+                setValue={setValue}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
+    </section>
+  );
+}
 
-      {availableSlots.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {availableSlots.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => { append(blankPack(s)); setOpenPack(s); }}
-              className="px-2 py-1 mono text-[10px] uppercase tracking-widest border border-border hover:bg-surface-2"
-            >+ {mealSlotLabel(s)}</button>
-          ))}
+function MealRow({
+  index, slot, row, register, control, setValue,
+}: {
+  index: number; slot: MealSlotId;
+  row: FormValues["packs"][number] | undefined;
+  register: UseFormRegister<FormValues>;
+  control: Control<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
+}) {
+  const enabled = row?.enabled ?? false;
+  const plates = row?.plates ?? 0;
+  const rate = row?.ratePerPlate ?? 0;
+  const hallRate = row?.hallRate ?? 0;
+  const amount = enabled ? plates * rate + hallRate : 0;
+  const venueId = row?.venueId ?? "";
+
+  const hallsForVenue = HALLS.filter((h) => !venueId || h.venueId === venueId);
+
+  return (
+    <tr className={`border-b border-border/60 last:border-0 ${enabled ? "bg-surface" : "bg-surface-2/30"}`}>
+      <td className="relative pl-3 pr-2 py-2.5 align-middle">
+        <span className={`absolute left-0 top-0 bottom-0 w-1 ${SLOT_BAR[slot]}`} aria-hidden />
+        <div className="flex flex-col gap-1.5 pl-2">
+          <div className="flex items-center gap-2">
+            <Controller
+              control={control}
+              name={`packs.${index}.enabled`}
+              render={({ field }) => (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={field.value}
+                  onClick={() => field.onChange(!field.value)}
+                  className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? "bg-confirmed" : "bg-border"}`}
+                >
+                  <span className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform ${field.value ? "translate-x-4" : "translate-x-0.5"}`} />
+                </button>
+              )}
+            />
+            <span className="text-[13px] font-medium">{mealSlotLabel(slot)}</span>
+          </div>
         </div>
-      )}
-    </Section>
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <select
+          className={cellInp}
+          value={venueId}
+          onChange={(e) => {
+            const newVenue = e.target.value;
+            setValue(`packs.${index}.venueId`, newVenue, { shouldDirty: true });
+            const currHall = row?.hallId;
+            if (currHall && !HALLS.find((h) => h.id === currHall && h.venueId === newVenue)) {
+              setValue(`packs.${index}.hallId`, "", { shouldDirty: true });
+            }
+            if (!enabled) setValue(`packs.${index}.enabled`, true);
+          }}
+          disabled={!enabled}
+        >
+          <option value="">Select...</option>
+          {VENUES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+        </select>
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <select
+          className={cellInp}
+          {...register(`packs.${index}.hallId`)}
+          disabled={!enabled}
+        >
+          <option value="">—</option>
+          {hallsForVenue.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <div className="flex items-center gap-1.5">
+          <input type="time" className={cellInp + " w-[78px] tabular-nums"} {...register(`packs.${index}.startTime`)} disabled={!enabled} />
+          <span className="text-muted">–</span>
+          <input type="time" className={cellInp + " w-[78px] tabular-nums"} {...register(`packs.${index}.endTime`)} disabled={!enabled} />
+        </div>
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <input
+          type="text"
+          placeholder={enabled ? `${mealSlotLabel(slot)} menu` : "Set menu..."}
+          className={cellInp + " text-[12px]"}
+          {...register(`packs.${index}.menuName`)}
+          disabled={!enabled}
+        />
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <input type="number" inputMode="numeric" min={0} className={cellInp + " text-right tabular-nums"} {...register(`packs.${index}.plates`)} disabled={!enabled} />
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <input type="number" inputMode="numeric" min={0} className={cellInp + " text-right tabular-nums"} {...register(`packs.${index}.ratePerPlate`)} disabled={!enabled} />
+      </td>
+      <td className="px-2 py-2.5 align-middle">
+        <input type="number" inputMode="numeric" min={0} className={cellInp + " text-right tabular-nums"} {...register(`packs.${index}.hallRate`)} disabled={!enabled} />
+      </td>
+      <td className="px-3 py-2.5 align-middle text-right tabular-nums font-medium">
+        {enabled ? formatINR(amount) : <span className="text-muted">—</span>}
+      </td>
+    </tr>
+  );
+}
+
+/* ─────────────────────────── totals / extras ────────────────────────────── */
+
+function useTotals(form: F) {
+  const v = useWatch({ control: form.control });
+  return useMemo(() => {
+    const activePacks: MealPack[] = (v.packs ?? []).filter((p) => p?.enabled).map((p) => ({
+      mealSlot: p!.mealSlot as MealSlotId,
+      slot: mealSlotLabel(p!.mealSlot as MealSlotId),
+      menuName: p!.menuName ?? "",
+      plates: Number(p!.plates ?? 0),
+      ratePerPlate: Number(p!.ratePerPlate ?? 0),
+      setupCost: 0,
+      extraCharges: 0,
+      hallRate: Number(p!.hallRate ?? 0),
+      items: [],
+    }));
+    return computeBill({
+      packs: activePacks,
+      additionalItems: ((v.additionalItems ?? []) as { description?: string; charges?: number; quantity?: number }[])
+        .map((x) => ({ description: x.description ?? "", charges: Number(x.charges ?? 0), quantity: Number(x.quantity ?? 1) })),
+      discountAmount: Number(v.discountAmount ?? 0),
+      discountPercentage: Number(v.discountPercentage ?? 0),
+      discountAmount2nd: 0,
+      discountPercentage2nd: 0,
+      payments: [],
+    });
+  }, [v]);
+}
+
+function TotalsStrip({ form }: { form: F }) {
+  const { register, control, setValue } = form;
+  const bill = useTotals(form);
+  const dPct = useWatch({ control, name: "discountPercentage" }) ?? 0;
+  return (
+    <div className="space-y-0 rounded-lg overflow-hidden border border-border">
+      <div className="flex items-center justify-between px-4 py-3 bg-confirmed/10">
+        <span className="text-[13px] font-medium">Total</span>
+        <span className="mono text-[14px] font-semibold tabular-nums">{formatINR(bill.mealsSubtotal)}</span>
+      </div>
+      <div className="flex items-center gap-3 flex-wrap px-4 py-3 bg-[hsl(0_70%_96%)] dark:bg-conflict/10">
+        <span className="px-3 py-1 rounded-full bg-[hsl(15_25%_25%)] text-white text-[11px] font-medium">Capture Selected Portion</span>
+        <div className="ml-auto flex items-center gap-4 flex-wrap">
+          <label className="flex items-center gap-2 text-[12px]">
+            <span className="text-muted">Disc %</span>
+            <input
+              type="number" min={0} max={100} step={0.1}
+              className={pillInpSm + " w-20 text-right tabular-nums"}
+              {...register("discountPercentage", { onChange: (e) => { if (Number(e.target.value) > 0) setValue("discountAmount", 0); } })}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-[12px]">
+            <span className="text-muted">Discount</span>
+            <input
+              type="number" min={0}
+              disabled={dPct > 0}
+              className={pillInpSm + " w-28 text-right tabular-nums"}
+              {...register("discountAmount")}
+            />
+          </label>
+        </div>
+      </div>
+      <div className="flex items-center justify-between px-4 py-3 bg-confirmed/5">
+        <span className="text-[13px] font-medium">Net Amount</span>
+        <span className="mono text-[14px] font-semibold tabular-nums">{formatINR(bill.mealsSubtotal - bill.mealsDiscount)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -567,232 +621,59 @@ function ExtrasSection({ form }: { form: F }) {
   const { control, register } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "additionalItems" });
   return (
-    <Section title={`Additional items (${fields.length})`}>
-      {fields.length === 0 && <div className="text-[11px] text-muted mb-2">Decor, DJ, valet, etc.</div>}
-      <div className="space-y-1.5">
-        {fields.map((f, i) => (
-          <div key={f.id} className="grid grid-cols-[1fr_5rem_5rem_auto] gap-2 items-center">
-            <input className={inp} placeholder="Description" {...register(`additionalItems.${i}.description`)} />
-            <input type="number" inputMode="numeric" className={inp + " text-right"} placeholder="Qty" {...register(`additionalItems.${i}.quantity`)} />
-            <input type="number" inputMode="numeric" className={inp + " text-right"} placeholder="₹" {...register(`additionalItems.${i}.charges`)} />
-            <button type="button" onClick={() => remove(i)} className="text-muted hover:text-conflict mono text-[12px] px-1">×</button>
-          </div>
-        ))}
+    <section className="border border-border rounded-lg bg-surface">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+        <span className="text-[13px] font-medium">Extra Items</span>
+        <button
+          type="button"
+          onClick={() => append({ description: "", charges: 0, quantity: 1 })}
+          className="h-8 px-3 text-[11px] border border-border rounded-full bg-surface hover:bg-surface-2 inline-flex items-center gap-1"
+        ><span className="text-confirmed">+</span> Add</button>
       </div>
-      <button
-        type="button"
-        onClick={() => append({ description: "", charges: 0, quantity: 1 })}
-        className="mt-2 px-2 py-1 mono text-[10px] uppercase tracking-widest border border-border hover:bg-surface-2"
-      >+ Add item</button>
-    </Section>
-  );
-}
-
-function DiscountsSection({ form }: { form: F }) {
-  const { register, control, setValue } = form;
-  const dPct  = useWatch({ control, name: "discountPercentage" });
-  const dPct2 = useWatch({ control, name: "discountPercentage2nd" });
-  return (
-    <Section title="Discounts & advance">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <Field label="Meals discount">
-          <div className="flex gap-1.5">
-            <input
-              type="number" inputMode="numeric" className={inp + " flex-1"}
-              placeholder="₹ amount" disabled={(dPct ?? 0) > 0}
-              {...register("discountAmount")}
-            />
-            <span className="text-faint self-center mono text-[10px]">or</span>
-            <input
-              type="number" inputMode="numeric" className={inp + " w-20"}
-              placeholder="%" max={100}
-              {...register("discountPercentage", { onChange: (e) => {
-                if (Number(e.target.value) > 0) setValue("discountAmount", 0);
-              } })}
-            />
-          </div>
-        </Field>
-        <Field label="Extras discount">
-          <div className="flex gap-1.5">
-            <input
-              type="number" inputMode="numeric" className={inp + " flex-1"}
-              placeholder="₹ amount" disabled={(dPct2 ?? 0) > 0}
-              {...register("discountAmount2nd")}
-            />
-            <span className="text-faint self-center mono text-[10px]">or</span>
-            <input
-              type="number" inputMode="numeric" className={inp + " w-20"}
-              placeholder="%" max={100}
-              {...register("discountPercentage2nd", { onChange: (e) => {
-                if (Number(e.target.value) > 0) setValue("discountAmount2nd", 0);
-              } })}
-            />
-          </div>
-        </Field>
-        <Field label="Advance required (₹)">
-          <input type="number" inputMode="numeric" className={inp} {...register("advanceRequired")} />
-        </Field>
-      </div>
-    </Section>
-  );
-}
-
-function NotesSection({ form }: { form: F }) {
-  const { register } = form;
-  return (
-    <Section title="Notes">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <Field label="Customer-facing notes">
-          <textarea rows={3} className={inp} {...register("notes")} />
-        </Field>
-        <Field label="Internal notes">
-          <textarea rows={3} className={inp} {...register("internalNotes")} />
-        </Field>
-      </div>
-    </Section>
-  );
-}
-
-/* ───────────────────────── billing panel ────────────────────────── */
-
-function useLiveBill(form: F) {
-  const v = useWatch({ control: form.control });
-  return useMemo(() => computeBill({
-    packs: ((v.packs ?? []) as MealPack[]),
-    additionalItems: ((v.additionalItems ?? []) as { description?: string; charges?: number; quantity?: number }[])
-      .map((x) => ({ description: x.description ?? "", charges: Number(x.charges ?? 0), quantity: Number(x.quantity ?? 1) })),
-    discountAmount: v.discountAmount ?? 0,
-    discountPercentage: v.discountPercentage ?? 0,
-    discountAmount2nd: v.discountAmount2nd ?? 0,
-    discountPercentage2nd: v.discountPercentage2nd ?? 0,
-    payments: [],
-  }), [v]);
-}
-
-function BillingPanel({ form }: { form: F }) {
-  const bill = useLiveBill(form);
-  const advance = useWatch({ control: form.control, name: "advanceRequired" }) ?? 0;
-  const packs = (useWatch({ control: form.control, name: "packs" }) ?? []) as MealPack[];
-  return (
-    <div className="p-3 flex-1 mono text-[11px]">
-      <div className="mono text-[9px] uppercase tracking-widest text-faint mb-3">Live billing</div>
-      {packs.map((p, i) => (
-        <Row key={i} k={`${mealSlotLabel(p.mealSlot)} · ${p.plates ?? 0}×${formatINR(p.ratePerPlate ?? 0)}`} v={formatINR(bill.packAmounts[i] ?? 0)} />
-      ))}
-      <Row k="Meals subtotal" v={formatINR(bill.mealsSubtotal)} muted />
-      {bill.mealsDiscount > 0 && <Row k="− Meals discount" v={`- ${formatINR(bill.mealsDiscount)}`} color="var(--conflict)" />}
-      {bill.extrasSubtotal > 0 && <Row k="+ Extras" v={formatINR(bill.extrasSubtotal)} />}
-      <div className="h-px bg-border my-2" />
-      <Row k="GRAND TOTAL" v={formatINR(bill.grandTotal)} bold />
-      {bill.extrasDiscount > 0 && <Row k="− Extras discount" v={`- ${formatINR(bill.extrasDiscount)}`} color="var(--conflict)" />}
-      <Row k="Final amount" v={formatINR(bill.finalAmount)} bold />
-      <div className="h-px bg-border my-2" />
-      <Row k="Advance required" v={formatINR(advance)} />
-      <Row k="Due" v={formatINR(bill.dueAmount)} color={bill.dueAmount > 0 ? "var(--conflict)" : "var(--confirmed)"} bold />
-    </div>
-  );
-}
-
-/* ─────────────────────────── footers ────────────────────────────── */
-
-function FormFooter({ onCancel, isNew }: { onCancel: () => void; isNew: boolean }) {
-  return (
-    <div className="shrink-0 border-t border-border p-3 flex gap-2 bg-surface">
-      <button type="button" onClick={onCancel} className="flex-1 h-9 px-3 text-[11px] uppercase tracking-widest mono border border-border hover:bg-surface-2">Cancel</button>
-      <button type="submit" className="flex-1 h-9 px-3 text-[11px] uppercase tracking-widest mono bg-accent text-accent-fg">
-        {isNew ? "Create" : "Save"}
-      </button>
-    </div>
-  );
-}
-
-function MobileFooter({
-  form, isNew, onCancel, showBill, setShowBill,
-}: {
-  form: F; isNew: boolean; onCancel: () => void;
-  showBill: boolean; setShowBill: (b: boolean) => void;
-}) {
-  const bill = useLiveBill(form);
-  return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-surface z-10">
-      {showBill && (
-        <div className="max-h-[60vh] overflow-y-auto scrollbar-thin border-b border-border">
-          <BillingPanel form={form} />
+      {fields.length === 0 ? (
+        <div className="px-4 py-3 text-[11px] text-muted">Decor, DJ, valet, etc.</div>
+      ) : (
+        <div className="divide-y divide-border">
+          {fields.map((f, i) => (
+            <div key={f.id} className="grid grid-cols-[1fr_5rem_6rem_auto] gap-2 items-center px-4 py-2">
+              <input className={cellInp} placeholder="Description" {...register(`additionalItems.${i}.description`)} />
+              <input type="number" min={1} className={cellInp + " text-right tabular-nums"} placeholder="Qty" {...register(`additionalItems.${i}.quantity`)} />
+              <input type="number" min={0} className={cellInp + " text-right tabular-nums"} placeholder="₹" {...register(`additionalItems.${i}.charges`)} />
+              <button type="button" onClick={() => remove(i)} className="text-muted hover:text-conflict text-[14px] px-1">×</button>
+            </div>
+          ))}
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => setShowBill(!showBill)}
-        className="w-full px-3 py-2 flex items-center justify-between border-b border-border hover:bg-surface-2"
-      >
-        <span className="mono text-[10px] uppercase tracking-widest text-muted">Bill</span>
-        <span className="mono text-[11px]">
-          Total <strong>{formatINRShort(bill.finalAmount)}</strong>
-          <span className={`ml-2 ${bill.dueAmount > 0 ? "text-conflict" : "text-confirmed"}`}>
-            Due {formatINRShort(bill.dueAmount)}
-          </span>
-        </span>
-        <span className="mono text-[10px] text-muted">{showBill ? "▾" : "▴"}</span>
-      </button>
-      <div className="flex gap-2 p-2">
-        <button type="button" onClick={onCancel} className="flex-1 h-11 px-3 text-[11px] uppercase tracking-widest mono border border-border">Cancel</button>
-        <button type="submit" className="flex-1 h-11 px-3 text-[11px] uppercase tracking-widest mono bg-accent text-accent-fg">
-          {isNew ? "Create" : "Save"}
-        </button>
-      </div>
+    </section>
+  );
+}
+
+function GrandTotalRow({ form }: { form: F }) {
+  const bill = useTotals(form);
+  return (
+    <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-confirmed/10 border border-border">
+      <span className="text-[14px] font-semibold">Grand Total</span>
+      <span className="mono text-[16px] font-bold tabular-nums">{formatINR(bill.grandTotal)}</span>
     </div>
   );
 }
 
 /* ─────────────────────────── primitives ─────────────────────────── */
 
-const inp = "w-full h-9 sm:h-8 px-2 bg-bg border border-border text-[12px] outline-none focus:border-accent rounded-none";
-
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section className="border border-border bg-surface p-3">
-      <div className="flex items-baseline justify-between mb-2">
-        <h3 className="mono text-[10px] uppercase tracking-widest text-faint">{title}</h3>
-        {hint && <span className="text-[10px] text-conflict">{hint}</span>}
-      </div>
-      {children}
-    </section>
-  );
-}
+const pillInp = "w-full h-10 px-3 bg-bg border border-border text-[13px] outline-none focus:border-confirmed rounded-full";
+const pillInpSm = "h-9 px-3 bg-bg border border-border text-[12px] outline-none focus:border-confirmed rounded-full";
+const cellInp = "w-full h-9 px-2 bg-bg border border-border text-[12px] outline-none focus:border-confirmed rounded-md disabled:opacity-50 disabled:cursor-not-allowed";
 
 function Field({
-  label, children, err, className,
-}: { label: string; children: React.ReactNode; err?: string; className?: string }) {
+  label, required, err, children,
+}: { label: string; required?: boolean; err?: string; children: ReactNode }) {
   return (
-    <label className={`block ${className ?? ""}`}>
-      <div className="text-[9px] uppercase tracking-widest text-faint mono mb-1">{label}</div>
+    <div>
+      <div className="text-[12px] font-medium mb-1.5 text-fg">
+        {label}{required && <span className="text-conflict ml-0.5">*</span>}
+      </div>
       {children}
-      {err && <div className="text-[10px] text-conflict mt-0.5">{err}</div>}
-    </label>
-  );
-}
-
-function Toggle({ control, name, label }: { control: F["control"]; name: "isQuotation" | "isPencilBooking"; label: string }) {
-  return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <button
-          type="button"
-          onClick={() => field.onChange(!field.value)}
-          className={`px-2 h-8 mono text-[10px] uppercase tracking-widest border ${field.value ? "border-accent text-fg bg-accent/10" : "border-border text-muted"}`}
-        >{field.value ? "✓ " : ""}{label}</button>
-      )}
-    />
-  );
-}
-
-function Row({ k, v, color, bold, muted }: { k: string; v: string; color?: string; bold?: boolean; muted?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2 py-0.5">
-      <span className={`${muted ? "text-muted" : ""} ${bold ? "font-medium" : ""}`}>{k}</span>
-      <span className={`${bold ? "font-medium" : ""}`} style={color ? { color } : undefined}>{v}</span>
+      {err && <div className="text-[10px] text-conflict mt-1">{err}</div>}
     </div>
   );
 }
