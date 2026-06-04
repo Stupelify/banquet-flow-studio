@@ -94,6 +94,7 @@ export type Booking = {
   customerId: string;
   secondCustomerId?: string;
   referredById?: string;
+  priority?: number;
   start: Date;
   end: Date;
 
