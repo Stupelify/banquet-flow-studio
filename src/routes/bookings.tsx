@@ -45,7 +45,10 @@ function BookingsPage() {
       .sort((a, b) => +b.start - +a.start);
   }, [bookings, q, statusFilter, customerLookup]);
 
-  const selectedId = search.id ?? filtered[0]?.id ?? null;
+  // On mobile/compact, never auto-select — user must tap to open, and Back clears selection.
+  // On desktop (lg+), fall back to first result for master-detail UX.
+  const isMobile = useIsMobile();
+  const selectedId = search.id ?? (isMobile ? null : filtered[0]?.id ?? null);
   const selected = selectedId ? bookings.find((b) => b.id === selectedId) ?? null : null;
 
   return (
