@@ -2,8 +2,8 @@
  * Phone bottom navigation. Shown only below `lg`. Slots:
  *   Bookings · Calendar · Enquiries · Payments · More
  *
- * "More" expands a sheet with the rest of the nav (Customers, Venues, Menu,
- * Reports, Activity, Settings, Theme toggle).
+ * Each item is gated by a permission; "More" shows only the tail items the
+ * current role can reach, plus a theme toggle, plus admin links when allowed.
  */
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
@@ -11,22 +11,35 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/use-theme";
+import { useCan } from "@/lib/auth/store";
+import type { Permission } from "@/lib/auth/permissions";
 
-const PRIMARY = [
-  { to: "/bookings",  label: "Bookings",  icon: "▤" },
-  { to: "/calendar",  label: "Calendar",  icon: "▦" },
-  { to: "/enquiries", label: "Enquiries", icon: "✎" },
-  { to: "/payments",  label: "Payments",  icon: "₹" },
-] as const;
+type Item = { to: string; label: string; icon?: string; perm: Permission };
 
-const MORE = [
-  { to: "/customers", label: "Customers" },
-  { to: "/venues",    label: "Venues" },
-  { to: "/menu",      label: "Menu" },
-  { to: "/reports",   label: "Reports" },
-  { to: "/activity",  label: "Activity" },
-  { to: "/settings",  label: "Settings" },
-] as const;
+const PRIMARY: Item[] = [
+  { to: "/bookings",  label: "Bookings",  icon: "▤", perm: "bookings.read" },
+  { to: "/calendar",  label: "Calendar",  icon: "▦", perm: "bookings.read" },
+  { to: "/enquiries", label: "Enquiries", icon: "✎", perm: "enquiries.read" },
+  { to: "/payments",  label: "Payments",  icon: "₹", perm: "payments.read" },
+];
+
+const MORE: Item[] = [
+  { to: "/customers", label: "Customers", perm: "customers.read" },
+  { to: "/venues",    label: "Venues",    perm: "venues.read" },
+  { to: "/menu",      label: "Menu",      perm: "menu.read" },
+  { to: "/reports",   label: "Reports",   perm: "reports.read" },
+  { to: "/activity",  label: "Activity",  perm: "activity.read" },
+  { to: "/settings",  label: "Settings",  perm: "settings.read" },
+  { to: "/users",     label: "Users",     perm: "users.manage" },
+  { to: "/roles",     label: "Roles",     perm: "roles.manage" },
+];
+
+function usePermittedItems(items: Item[]) {
+  // Hooks must run in stable order — call useCan for every item.
+  return items.map((it) => ({ item: it, allowed: useCan(it.perm) }))
+    .filter((x) => x.allowed)
+    .map((x) => x.item);
+}
 
 export function BottomTabs() {
   const router = useRouterState();
@@ -34,21 +47,24 @@ export function BottomTabs() {
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
 
+  const primary = usePermittedItems(PRIMARY);
+  const more = usePermittedItems(MORE);
   const isActive = (to: string) => path === to || path.startsWith(to + "/");
+  const cols = Math.min(primary.length + 1, 5);
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-30 h-14 border-t border-border bg-bg/95 backdrop-blur grid grid-cols-5"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-30 h-14 border-t border-border bg-bg/95 backdrop-blur grid"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
       aria-label="Primary"
     >
-      {PRIMARY.map((item) => {
+      {primary.map((item) => {
         const active = isActive(item.to);
         return (
           <Link
             key={item.to}
             to={item.to}
-            className={`flex flex-col items-center justify-center gap-0.5 min-h-[44px] ${
+            className={`relative flex flex-col items-center justify-center gap-0.5 min-h-[44px] ${
               active ? "text-fg" : "text-muted"
             }`}
           >
@@ -62,7 +78,7 @@ export function BottomTabs() {
         <SheetTrigger asChild>
           <button
             className={`flex flex-col items-center justify-center gap-0.5 min-h-[44px] ${
-              MORE.some((m) => isActive(m.to)) ? "text-fg" : "text-muted"
+              more.some((m) => isActive(m.to)) ? "text-fg" : "text-muted"
             }`}
             aria-label="More"
           >
@@ -75,7 +91,7 @@ export function BottomTabs() {
             <SheetTitle className="mono text-[11px] uppercase tracking-widest text-faint text-left">More</SheetTitle>
           </SheetHeader>
           <div className="grid grid-cols-3 gap-2 mt-3">
-            {MORE.map((item) => (
+            {more.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
