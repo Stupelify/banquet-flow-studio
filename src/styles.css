@@ -2,25 +2,27 @@
 @source "../src";
 @import "tw-animate-css";
 
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/500.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-fg: var(--fg);
@@ -28,6 +30,7 @@
   --color-faint: var(--faint);
 
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --color-accent-fg: var(--accent-fg);
   --color-confirmed: var(--confirmed);
   --color-pencil: var(--pencil);
@@ -53,67 +56,75 @@
   --color-destructive-foreground: var(--accent-fg);
   --color-input: var(--border);
   --color-ring: var(--accent);
+
+  --shadow-soft: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-pop:  0 8px 24px -8px rgb(15 23 42 / 0.18), 0 2px 6px -2px rgb(15 23 42 / 0.08);
 }
 
+/* ── Cloud White (light) ── */
 :root {
-  --bg: #fafafa;
-  --surface: #ffffff;
-  --surface-2: #f4f4f5;
-  --border: #e4e4e7;
-  --border-strong: #d4d4d8;
-  --fg: #18181b;
-  --muted: #71717a;
-  --faint: #a1a1aa;
+  --bg:          #fafbfc;
+  --surface:     #ffffff;
+  --surface-2:   #f3f5f8;
+  --surface-3:   #e8ecf1;
+  --border:      #e4e8ee;
+  --border-strong:#cbd2dc;
+  --fg:          #0f172a;
+  --muted:       #64748b;
+  --faint:       #94a3b8;
 
-  --accent: #2563eb;
-  --accent-fg: #ffffff;
-  --confirmed: #059669;
-  --pencil: #d97706;
-  --conflict: #dc2626;
-  --quotation: #7c3aed;
-  --enquiry: #71717a;
-  --google: #0891b2;
+  --accent:      #3b82f6;
+  --accent-soft: #dbe8ff;
+  --accent-fg:   #ffffff;
+  --confirmed:   #10b981;
+  --pencil:      #d97706;
+  --conflict:    #e11d48;
+  --quotation:   #7c3aed;
+  --enquiry:     #64748b;
+  --google:      #0891b2;
 }
 
+/* ── Cloud Dark (kept comfortable, not pitch-black) ── */
 .dark {
-  --bg: #09090b;
-  --surface: #121214;
-  --surface-2: #1c1c1f;
-  --border: #27272a;
-  --border-strong: #3f3f46;
-  --fg: #f4f4f5;
-  --muted: #71717a;
-  --faint: #52525b;
+  --bg:          #0b1220;
+  --surface:     #111a2c;
+  --surface-2:   #182236;
+  --surface-3:   #1f2a40;
+  --border:      #243049;
+  --border-strong:#334159;
+  --fg:          #e6edf7;
+  --muted:       #94a3b8;
+  --faint:       #64748b;
 
-  --accent: #3b82f6;
-  --accent-fg: #ffffff;
-  --confirmed: #10b981;
-  --pencil: #eab308;
-  --conflict: #ef4444;
-  --quotation: #a855f7;
-  --enquiry: #71717a;
-  --google: #06b6d4;
+  --accent:      #60a5fa;
+  --accent-soft: #1f3358;
+  --accent-fg:   #0b1220;
+  --confirmed:   #34d399;
+  --pencil:      #fbbf24;
+  --conflict:    #fb7185;
+  --quotation:   #c4b5fd;
+  --enquiry:     #94a3b8;
+  --google:      #22d3ee;
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
+  * { border-color: var(--color-border); }
   html, body {
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: 13.5px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: "cv11", "ss01";
+    font-feature-settings: "cv11", "ss01", "ss03";
   }
   .num, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .tnum { font-variant-numeric: tabular-nums; }
   button { cursor: pointer; }
   input, select, textarea { font-family: inherit; }
-  ::selection { background: color-mix(in oklab, var(--accent) 35%, transparent); }
-  *:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+  ::selection { background: color-mix(in oklab, var(--accent) 30%, transparent); }
+  *:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 4px; }
+  h1,h2,h3,h4 { letter-spacing: -0.01em; }
 }
 
 @layer utilities {
@@ -127,14 +138,26 @@
       color-mix(in oklab, var(--conflict) 22%, transparent) 0 6px,
       transparent 6px 12px);
   }
-  .pulse-conflict {
-    animation: pulse-conflict 2s ease-in-out infinite;
-  }
+  .pulse-conflict { animation: pulse-conflict 2s ease-in-out infinite; }
   @keyframes pulse-conflict {
-    0%, 100% { box-shadow: 0 0 0 1px var(--conflict), inset 0 0 0 0 transparent; }
-    50% { box-shadow: 0 0 0 2px var(--conflict), inset 0 0 0 9999px color-mix(in oklab, var(--conflict) 8%, transparent); }
+    0%, 100% { box-shadow: 0 0 0 1px var(--conflict); }
+    50%      { box-shadow: 0 0 0 2px var(--conflict), inset 0 0 0 9999px color-mix(in oklab, var(--conflict) 8%, transparent); }
   }
   .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+  .card-soft {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface-2); color: var(--fg);
+    border: 1px solid var(--border);
+  }
 }
