@@ -10,8 +10,7 @@ import {
 import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
-import { TopNav } from "@/components/shell/TopNav";
-import { BottomTabs } from "@/components/shell/BottomTabs";
+import { AppShell } from "@/components/shell/AppShell";
 import { CommandPalette } from "@/components/shell/CommandPalette";
 
 function NotFoundComponent() {
@@ -114,14 +113,18 @@ function RootComponent() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  if (isPrint || isLogin) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
-      {!isPrint && !isLogin && <div className="hidden lg:block"><TopNav onOpenCmd={() => setCmd(true)} /></div>}
-      <div className={!isPrint && !isLogin ? "pb-14 lg:pb-0" : undefined}>
-        <Outlet />
-      </div>
-      {!isPrint && !isLogin && <BottomTabs />}
-      {!isPrint && !isLogin && <CommandPalette open={cmd} onClose={() => setCmd(false)} />}
+      <AppShell onOpenCmd={() => setCmd(true)} />
+      <CommandPalette open={cmd} onClose={() => setCmd(false)} />
     </QueryClientProvider>
   );
 }
