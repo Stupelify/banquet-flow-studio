@@ -11,6 +11,24 @@ import { AppSidebar } from "./AppSidebar";
 import { WorkspaceTabs } from "./WorkspaceTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useTabsStore, type WorkspaceTab } from "@/lib/ui/tabs-store";
+
+const PAGE_TITLES: Record<string, { title: string; kind: WorkspaceTab["kind"] }> = {
+  "/calendar":  { title: "Calendar",  kind: "page" },
+  "/bookings":  { title: "Bookings",  kind: "booking" },
+  "/enquiries": { title: "Enquiries", kind: "enquiry" },
+  "/payments":  { title: "Payments",  kind: "payment" },
+  "/customers": { title: "Customers", kind: "customer" },
+  "/venues":    { title: "Venues",    kind: "venue" },
+  "/menu":      { title: "Menu",      kind: "page" },
+  "/reports":   { title: "Reports",   kind: "page" },
+  "/activity":  { title: "Activity",  kind: "page" },
+  "/settings":  { title: "Settings",  kind: "page" },
+  "/users":     { title: "Users",     kind: "page" },
+  "/roles":     { title: "Roles",     kind: "page" },
+  "/":          { title: "Home",      kind: "page" },
+  "/dashboard": { title: "Dashboard", kind: "page" },
+};
 
 export function AppShell({ onOpenCmd }: { onOpenCmd: () => void }) {
   const [collapsed, setCollapsed] = useState(() => {
@@ -20,6 +38,16 @@ export function AppShell({ onOpenCmd }: { onOpenCmd: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useIsMobile();
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const searchStr = useRouterState({ select: (r) => r.location.searchStr });
+  const openTab = useTabsStore((s) => s.open);
+
+  // Auto-register a tab for every navigated route.
+  useEffect(() => {
+    const base = PAGE_TITLES[path];
+    if (!base) return;
+    const href = path + (searchStr || "");
+    openTab({ id: path, title: base.title, kind: base.kind, href });
+  }, [path, searchStr, openTab]);
 
   useEffect(() => {
     try { localStorage.setItem("bika-sidebar-collapsed", collapsed ? "1" : "0"); } catch { /* ignore */ }
