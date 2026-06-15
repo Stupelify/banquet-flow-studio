@@ -44,7 +44,7 @@ export function WorkspaceTabs() {
           <div
             key={t.id}
             onClick={() => { setActive(t.id); nav({ to: t.href as any }); }}
-            className={`group flex items-center gap-2 pl-3 pr-1.5 min-w-[140px] max-w-[220px] border-r border-border cursor-pointer text-[12px] ${
+            className={`group relative flex items-center gap-2 pl-3 pr-1.5 min-w-[140px] max-w-[220px] border-r border-border cursor-pointer text-[12px] ${
               isOn ? "bg-bg text-fg" : "text-muted hover:text-fg hover:bg-surface-2"
             }`}
           >
@@ -69,7 +69,7 @@ export function WorkspaceTabs() {
             >
               <X className="size-3" />
             </button>
-            {isOn && <span className="absolute -mt-9 ml-[-12px] h-0.5 w-full bg-accent pointer-events-none" />}
+            {isOn && <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-accent pointer-events-none" />}
           </div>
         );
       })}
