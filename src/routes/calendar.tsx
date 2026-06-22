@@ -188,15 +188,13 @@ function CalendarPage() {
 
           {/* Desktop drawer */}
           {!isMobile && selectedId && (
-            <div className="hidden lg:flex border-l border-border-strong">
-              <DrawerHeaderClose onClose={() => setSelectedId(null)} />
-              <BookingDrawer
-                bookingId={selectedId}
-                onClose={() => setSelectedId(null)}
-                conflictIds={selectedConflicts}
-              />
-            </div>
+            <BookingDrawer
+              bookingId={selectedId}
+              onClose={() => setSelectedId(null)}
+              conflictIds={selectedConflicts}
+            />
           )}
+
         </div>
       </main>
 
