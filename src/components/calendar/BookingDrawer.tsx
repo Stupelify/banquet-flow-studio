@@ -3,7 +3,7 @@ import { bookingTotal } from "@/lib/mock/data";
 import { formatDate, formatINR, formatINRShort, formatTime, relativeDur } from "@/lib/format";
 import { statusToken } from "@/lib/calendar-utils";
 
-export function BookingDrawer({ bookingId, onClose, conflictIds = [] }: { bookingId: string | null; onClose: () => void; conflictIds?: string[] }) {
+export function BookingDrawer({ bookingId, onClose, conflictIds = [], embedded = false }: { bookingId: string | null; onClose: () => void; conflictIds?: string[]; embedded?: boolean }) {
   if (!bookingId) return null;
   const b = BOOKINGS.find((x) => x.id === bookingId);
   if (!b) return null;
@@ -13,7 +13,7 @@ export function BookingDrawer({ bookingId, onClose, conflictIds = [] }: { bookin
   const advancePct = total.grand > 0 ? Math.min(100, Math.round((total.received / total.grand) * 100)) : 0;
 
   return (
-    <aside className="fixed top-11 right-0 bottom-0 w-[420px] max-w-[92vw] bg-surface border-l border-border-strong z-30 flex flex-col">
+    <aside className={embedded ? "h-full w-full bg-surface flex flex-col" : "h-full w-[420px] max-w-[92vw] bg-surface border-l border-border-strong flex flex-col shrink-0"}>
       <header className="h-10 px-3 border-b border-border flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="mono text-[10px] text-muted">{b.id}</span>
