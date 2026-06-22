@@ -215,17 +215,6 @@ function CalendarPage() {
   );
 }
 
-function DrawerHeaderClose({ onClose }: { onClose: () => void }) {
-  return (
-    <button
-      onClick={onClose}
-      className="absolute right-2 top-2 z-10 size-7 grid place-items-center text-muted hover:text-fg bg-surface/80"
-      aria-label="Close"
-    >
-      <X className="size-4" />
-    </button>
-  );
-}
 
 function FiltersPanel({
   date,
