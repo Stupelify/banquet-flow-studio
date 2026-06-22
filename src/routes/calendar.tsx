@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { BOOKINGS, HALLS, VENUES, customerById, bookingTotal } from "@/lib/mock/data";
 import type { Booking } from "@/lib/mock/types";
 import { dayKey, formatDate, formatINRShort } from "@/lib/format";
