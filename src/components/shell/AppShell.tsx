@@ -100,7 +100,7 @@ export function AppShell({ onOpenCmd }: { onOpenCmd: () => void }) {
         </div>
 
         {/* Content — every page fills available space */}
-        <main className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
+        <main className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
           <Outlet />
         </main>
       </div>
