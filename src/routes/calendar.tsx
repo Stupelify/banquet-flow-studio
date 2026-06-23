@@ -391,17 +391,21 @@ function WeekView({ date, onSelect }: { date: Date; onSelect: (id: string) => vo
   }
   return (
     <div className="flex-1 overflow-auto scrollbar-thin">
-      <div className="grid grid-cols-7 min-w-[760px] h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-7 sm:min-w-[760px] h-full">
         {days.map((d) => {
           const bs = (byDay.get(dayKey(d)) ?? []).sort((a, b) => +a.start - +b.start);
           const isToday = dayKey(d) === dayKey(new Date());
           return (
-            <div key={d.toString()} className="border-r border-border last:border-r-0 flex flex-col">
-              <div className={`px-2 py-1.5 border-b border-border sticky top-0 bg-surface ${isToday ? "bg-accent/10" : ""}`}>
-                <div className="text-[10px] uppercase tracking-widest text-muted mono">{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
-                <div className="mono text-[13px] font-semibold">{d.getDate()}</div>
+            <div key={d.toString()} className="border-b sm:border-b-0 sm:border-r border-border last:border-r-0 last:border-b-0 flex flex-col">
+              <div className={`px-2 py-1.5 border-b border-border sm:sticky sm:top-0 bg-surface ${isToday ? "bg-accent/10" : ""}`}>
+                <div className="flex items-baseline gap-2 sm:block">
+                  <div className="text-[10px] uppercase tracking-widest text-muted mono">{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
+                  <div className="mono text-[13px] font-semibold">{d.getDate()}</div>
+                  <span className="sm:hidden mono text-[10px] text-faint ml-auto">{bs.length} bk</span>
+                </div>
               </div>
               <div className="p-1 space-y-1 flex-1">
+                {bs.length === 0 && <div className="px-2 py-1 text-[10px] mono text-faint">— free —</div>}
                 {bs.map((b) => {
                   const tok = statusToken(b.status);
                   const c = customerById(b.customerId);
@@ -413,7 +417,7 @@ function WeekView({ date, onSelect }: { date: Date; onSelect: (id: string) => vo
                       style={{ borderLeft: `2px solid ${tok.color}`, background: `color-mix(in oklab, ${tok.color} 10%, transparent)` }}
                     >
                       <div className="text-[11px] font-medium truncate">{b.functionName}</div>
-                      <div className="text-[9px] text-muted mono">{String(b.start.getHours()).padStart(2, "0")}:{String(b.start.getMinutes()).padStart(2, "0")} · {c.name.split(" ")[0]}</div>
+                      <div className="text-[9px] text-muted mono truncate">{String(b.start.getHours()).padStart(2, "0")}:{String(b.start.getMinutes()).padStart(2, "0")} · {c.name.split(" ")[0]}</div>
                     </button>
                   );
                 })}
