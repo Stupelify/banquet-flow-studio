@@ -43,12 +43,78 @@ export function HallBoard({
     <div className="flex-1 overflow-auto scrollbar-thin">
       {conflicts.size > 0 && (
         <div className="sticky top-0 z-20 px-3 py-1.5 border-b border-border flex items-center gap-3 mono text-[11px]" style={{ background: "color-mix(in oklab, var(--conflict) 12%, var(--surface))", color: "var(--conflict)" }}>
-          <span className="font-semibold uppercase tracking-widest">! {Array.from(new Set(Array.from(conflicts.keys()))).length} hall conflicts</span>
-          <span className="text-muted">— overlapping bookings on shared halls. Click to resolve.</span>
+          <span className="font-semibold uppercase tracking-widest">! {Array.from(new Set(Array.from(conflicts.keys()))).length} conflicts</span>
+          <span className="text-muted hidden sm:inline">— overlapping bookings on shared halls.</span>
         </div>
       )}
-      <div className="min-w-[1100px] relative">
-        {/* Time header */}
+
+      {/* Mobile: stacked hall list */}
+      <div className="lg:hidden">
+        {VENUES.map((v) => {
+          const halls = visibleHalls.filter((h) => h.venueId === v.id);
+          if (!halls.length) return null;
+          return (
+            <div key={v.id}>
+              <div className="px-3 py-1.5 bg-surface-2/60 border-b border-border text-[10px] uppercase tracking-widest text-muted mono">{v.name}</div>
+              {halls.map((h) => {
+                const rowB = dayB.filter((b) => b.hallIds.includes(h.id)).sort((a, b) => +a.start - +b.start);
+                const hasConflict = rowB.some((b) => conflicts.has(b.id));
+                return (
+                  <div key={h.id} className="border-b border-border">
+                    <div className={`px-3 py-2 flex items-center justify-between ${hasConflict ? "bg-[color-mix(in_oklab,var(--conflict)_8%,transparent)]" : ""}`}>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[12px] font-medium truncate">{h.name}</span>
+                          {hasConflict && <span className="mono text-[9px] uppercase" style={{ color: "var(--conflict)" }}>!</span>}
+                        </div>
+                        <div className="text-[10px] text-muted mono">cap {h.capacity} · F{h.floor}</div>
+                      </div>
+                      <span className="mono text-[10px] text-faint shrink-0">{rowB.length} bk</span>
+                    </div>
+                    {rowB.length === 0 ? (
+                      <div className="px-3 pb-2 text-[10px] mono text-faint">— free —</div>
+                    ) : (
+                      <div className="px-2 pb-2 space-y-1">
+                        {rowB.map((b) => {
+                          const tok = statusToken(b.status);
+                          const c = customerById(b.customerId);
+                          const total = bookingTotal(b);
+                          const isSel = b.id === selectedId;
+                          const isConf = conflicts.has(b.id);
+                          return (
+                            <button
+                              key={b.id}
+                              onClick={() => onSelect(b.id, conflicts.get(b.id) ?? [])}
+                              className={`w-full text-left px-2 py-1.5 ${b.status === "pencil" ? "hatch-pencil" : ""} ${isConf ? "pulse-conflict" : ""} ${isSel ? "ring-1 ring-accent" : ""} ${b.source === "google" ? "border border-dashed" : "border border-transparent"}`}
+                              style={{
+                                borderLeft: `3px solid ${tok.color}`,
+                                background: b.status === "pencil" ? "transparent" : `color-mix(in oklab, ${tok.color} 10%, var(--surface))`,
+                                borderColor: b.source === "google" ? "var(--google)" : undefined,
+                              }}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="text-[12px] font-medium truncate min-w-0">{b.functionName}</span>
+                                <span className="mono text-[10px] text-muted shrink-0">{formatINRShort(total.grand)}</span>
+                              </div>
+                              <div className="flex items-center justify-between mono text-[10px] text-muted">
+                                <span className="truncate min-w-0">{formatTime(b.start)}–{formatTime(b.end)} · {b.expectedGuests}p</span>
+                                <span className="truncate ml-2 shrink-0 max-w-[40%]">{c.name.split(" ")[0]}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: timeline */}
+      <div className="hidden lg:block min-w-[1100px] relative">
         <div className="sticky top-0 z-10 flex border-b border-border bg-bg">
           <div className="w-44 shrink-0 border-r border-border bg-surface px-3 h-8 flex items-center text-[10px] uppercase tracking-widest text-faint mono">Hall / Time</div>
           <div className="flex-1 relative h-8">
@@ -72,7 +138,6 @@ export function HallBoard({
           </div>
         </div>
 
-        {/* Rows */}
         {VENUES.map((v) => {
           const halls = visibleHalls.filter((h) => h.venueId === v.id);
           if (!halls.length) return null;
@@ -95,7 +160,6 @@ export function HallBoard({
                       <div className="text-[10px] text-muted mono">cap {h.capacity} · F{h.floor}</div>
                     </div>
                     <div className="flex-1 relative" style={{ width: TOTAL_H * PX_PER_H }}>
-                      {/* hour grid lines */}
                       {Array.from({ length: TOTAL_H }).map((_, i) => (
                         <div key={i} className="absolute top-0 bottom-0 border-l border-border/40" style={{ left: i * PX_PER_H }} />
                       ))}
