@@ -383,26 +383,108 @@ function WeekView({ date, onSelect }: { date: Date; onSelect: (id: string) => vo
     d.setDate(d.getDate() + i);
     return d;
   });
+  const weekKeys = new Set(days.map(dayKey));
+  const todayKey = dayKey(new Date());
+
+  // Desktop: group by day
   const byDay = new Map<string, Booking[]>();
   for (const b of BOOKINGS) {
     const k = dayKey(b.start);
     if (!byDay.has(k)) byDay.set(k, []);
     byDay.get(k)!.push(b);
   }
+
+  // Mobile: group by hall (hall-dominant)
+  const byHall = new Map<string, Booking[]>();
+  for (const b of BOOKINGS) {
+    if (!weekKeys.has(dayKey(b.start))) continue;
+    for (const hid of b.hallIds) {
+      if (!byHall.has(hid)) byHall.set(hid, []);
+      byHall.get(hid)!.push(b);
+    }
+  }
+  for (const list of byHall.values()) list.sort((a, b) => +a.start - +b.start);
+
   return (
     <div className="flex-1 overflow-auto scrollbar-thin">
-      <div className="grid grid-cols-1 sm:grid-cols-7 sm:min-w-[760px] h-full">
+      {/* Mobile: hall-dominant list */}
+      <div className="sm:hidden">
+        <div className="sticky top-0 z-10 bg-surface border-b border-border px-3 py-1.5">
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((d) => {
+              const isToday = dayKey(d) === todayKey;
+              return (
+                <div key={d.toString()} className={`text-center ${isToday ? "text-accent" : "text-muted"}`}>
+                  <div className="text-[8px] uppercase tracking-widest mono">{d.toLocaleDateString("en-GB", { weekday: "narrow" })}</div>
+                  <div className="mono text-[11px] font-semibold">{d.getDate()}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {VENUES.map((v) => {
+          const halls = HALLS.filter((h) => h.venueId === v.id);
+          return (
+            <div key={v.id}>
+              <div className="px-3 py-1 bg-surface-2/60 text-[10px] uppercase tracking-widest text-muted mono border-b border-border">
+                {v.name.split("—")[0]}
+              </div>
+              {halls.map((h) => {
+                const bs = byHall.get(h.id) ?? [];
+                return (
+                  <div key={h.id} className="border-b border-border">
+                    <div className="flex items-center justify-between px-3 pt-2 pb-1">
+                      <div className="text-[12px] font-semibold truncate">{h.name}</div>
+                      <div className="mono text-[10px] text-faint shrink-0">{bs.length} bk</div>
+                    </div>
+                    {bs.length === 0 ? (
+                      <div className="px-3 pb-2 text-[10px] mono text-faint">— free all week —</div>
+                    ) : (
+                      <div className="px-2 pb-2 space-y-1">
+                        {bs.map((b) => {
+                          const tok = statusToken(b.status);
+                          const c = customerById(b.customerId);
+                          const dow = b.start.toLocaleDateString("en-GB", { weekday: "short" });
+                          const hh = String(b.start.getHours()).padStart(2, "0");
+                          const mm = String(b.start.getMinutes()).padStart(2, "0");
+                          return (
+                            <button
+                              key={b.id}
+                              onClick={() => onSelect(b.id)}
+                              className={`flex w-full text-left items-stretch gap-2 px-2 py-1 ${b.status === "pencil" ? "hatch-pencil" : ""}`}
+                              style={{ borderLeft: `2px solid ${tok.color}`, background: `color-mix(in oklab, ${tok.color} 10%, transparent)` }}
+                            >
+                              <div className="shrink-0 w-10 text-center border-r border-border/60 pr-2">
+                                <div className="mono text-[9px] uppercase text-muted">{dow}</div>
+                                <div className="mono text-[12px] font-semibold">{b.start.getDate()}</div>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-[11px] font-medium truncate">{b.functionName}</div>
+                                <div className="text-[9px] text-muted mono truncate">{hh}:{mm} · {c.name.split(" ")[0]}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: day columns */}
+      <div className="hidden sm:grid grid-cols-7 min-w-[760px] h-full">
         {days.map((d) => {
           const bs = (byDay.get(dayKey(d)) ?? []).sort((a, b) => +a.start - +b.start);
-          const isToday = dayKey(d) === dayKey(new Date());
+          const isToday = dayKey(d) === todayKey;
           return (
-            <div key={d.toString()} className="border-b sm:border-b-0 sm:border-r border-border last:border-r-0 last:border-b-0 flex flex-col">
-              <div className={`px-2 py-1.5 border-b border-border sm:sticky sm:top-0 bg-surface ${isToday ? "bg-accent/10" : ""}`}>
-                <div className="flex items-baseline gap-2 sm:block">
-                  <div className="text-[10px] uppercase tracking-widest text-muted mono">{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
-                  <div className="mono text-[13px] font-semibold">{d.getDate()}</div>
-                  <span className="sm:hidden mono text-[10px] text-faint ml-auto">{bs.length} bk</span>
-                </div>
+            <div key={d.toString()} className="border-r border-border last:border-r-0 flex flex-col">
+              <div className={`px-2 py-1.5 border-b border-border sticky top-0 bg-surface ${isToday ? "bg-accent/10" : ""}`}>
+                <div className="text-[10px] uppercase tracking-widest text-muted mono">{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
+                <div className="mono text-[13px] font-semibold">{d.getDate()}</div>
               </div>
               <div className="p-1 space-y-1 flex-1">
                 {bs.length === 0 && <div className="px-2 py-1 text-[10px] mono text-faint">— free —</div>}
