@@ -1,0 +1,166 @@
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-gray-900 {
+    color: var(--text-1);
+  }
+
+  .text-gray-700 {
+    color: var(--text-2);
+  }
+
+  .text-gray-800 {
+    color: var(--text-2);
+  }
+
+  .text-gray-600 {
+    color: var(--text-3);
+  }
+
+  .text-gray-500 {
+    color: var(--text-4);
+  }
+
+  .text-gray-400 {
+    color: var(--text-4);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .view-all {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal-600);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    text-decoration: none;
+    transition: color var(--motion-fast) var(--motion-ease);
+  }
+
+  .view-all:hover {
+    color: var(--teal-700);
+  }
+
+
+  /* Utility to add bottom padding when bottom nav is present.
+     Extra 16 px so the last card / row is never hidden behind the nav. */
+  .has-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 44px);
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Token-based color transition for status chips/badges whose classes swap
+   in place (e.g. the SSE connection chip cycling Live → Reconnecting). */
+.motion-colors {
+  transition: background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
+}
+
+/* Soft mount fade for inline banners/chips that appear conditionally
+   (draft-offer bar, external-update notice, availability chip). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes fade-in-soft {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .fade-in-soft {
+    animation: fade-in-soft var(--motion-base) var(--motion-ease) both;
+  }
+
+  /* SPA route pane — shell stays; content eases in on mount */
+  @keyframes page-content-enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-content-enter {
+    /* backwards, not both: retaining the final transform keeps an identity
+       transform on the pane, which hijacks position:fixed descendants
+       (mobile bottom sheet, FAB) into the pane's coordinate space. */
+    animation: page-content-enter var(--motion-base) var(--motion-ease) backwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+
+  header,
+  aside,
+  .bottom-nav,
+  .fab,
+  .command-palette,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  #main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* Remove number input spinners globally */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+

@@ -1,0 +1,33 @@
+/*
+ * Design-system manifest. postcss-import inlines these into a single file
+ * (in this exact order) before Tailwind runs, so @layer / @apply behave as if
+ * everything still lived here.
+ *
+ *  tw.css          @tailwind directives
+ *  tokens.css      :root + dark-theme tokens, dark component overrides, skip-nav
+ *  base.css        @layer base — element resets, tables, status stripes
+ *  components.css  @layer components — btn, card, input, kpi, mobile cards, bottom nav
+ *  responsive.css  device-tier overrides, touch targets, sparkline, motion
+ *  utilities.css   @layer utilities
+ *  layout.css      dashboard shell, sidebar, TopNav, toolbar, sheet, swipe rows
+ *  ops-replica.css Bika Ops standalone replica page
+ */
+@import './styles/tw.css';
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/components.css';
+@import './styles/responsive.css';
+@import './styles/utilities.css';
+@import './styles/layout.css';
+@import './styles/ops-replica.css';
+@import './styles/calendar-notion.css';
+
+/* Font vars — port of the next/font `variable` output (was set via body
+   className in layout.tsx). @import rules must stay above any other rule,
+   so this can't sit literally above them despite living at the "top" of the
+   file conceptually. */
+:root {
+  --font-inter: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-inter-tight: 'Inter Tight Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
+}

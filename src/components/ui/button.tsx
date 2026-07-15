@@ -1,49 +1,57 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type ButtonSize = 'md' | 'sm';
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  },
-);
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  /** Shows a spinner and disables the button. */
+  loading?: boolean;
+  /** Icon rendered before the label. */
+  icon?: ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
-    );
-  },
-);
-Button.displayName = "Button";
+const VARIANT_CLASS: Record<ButtonVariant, string> = {
+  primary: 'btn btn-primary',
+  secondary: 'btn btn-secondary',
+  danger: 'btn btn-danger',
+  ghost: 'btn text-text-3 hover:bg-surface-2 hover:text-text-1',
+};
 
-export { Button, buttonVariants };
+const SIZE_CLASS: Record<ButtonSize, string> = {
+  md: '',
+  sm: 'text-sm',
+};
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = 'secondary',
+    size = 'md',
+    loading = false,
+    icon,
+    disabled,
+    className,
+    children,
+    type,
+    ...rest
+  },
+  ref
+) {
+  const sizeClass = SIZE_CLASS[size];
+  return (
+    <button
+      ref={ref}
+      type={type ?? 'button'}
+      className={`${VARIANT_CLASS[variant]}${sizeClass ? ` ${sizeClass}` : ''}${className ? ` ${className}` : ''}`}
+      disabled={disabled || loading}
+      {...rest}
+    >
+      {loading ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : icon}
+      {children}
+    </button>
+  );
+});
+
+export default Button;

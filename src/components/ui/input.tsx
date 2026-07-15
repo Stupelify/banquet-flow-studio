@@ -1,22 +1,23 @@
-import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { forwardRef, type InputHTMLAttributes } from 'react';
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-Input.displayName = "Input";
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Renders the error border + aria-invalid. Message itself lives in <Field>. */
+  invalid?: boolean;
+}
 
-export { Input };
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { invalid = false, className, ...rest },
+  ref
+) {
+  return (
+    <input
+      ref={ref}
+      className={`input${invalid ? ' !border-red-400' : ''}${className ? ` ${className}` : ''}`}
+      aria-invalid={invalid || undefined}
+      {...rest}
+    />
+  );
+});
+
+export default Input;

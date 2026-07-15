@@ -1,0 +1,319 @@
+/* ── Device tier overrides ───────────────────────────────────── */
+[data-device-tier="mid"] .page-enter {
+  animation-duration: 0.12s;
+}
+
+[data-device-tier="low"] .page-enter {
+  animation: none !important;
+}
+
+[data-device-tier="low"] .skeleton {
+  animation: none !important;
+  background-color: var(--surface-2) !important;
+}
+
+[data-device-tier="low"] .kpi-card:hover,
+[data-device-tier="low"] .card:hover,
+[data-device-tier="low"] .fab:hover {
+  transform: none !important;
+}
+
+[data-device-tier="low"] .bar-grow {
+  animation: none !important;
+}
+
+[data-device-tier="low"] .modal-panel,
+[data-device-tier="low"] .command-palette {
+  backdrop-filter: none !important;
+  background: var(--surface) !important;
+}
+
+[data-device-tier="low"] .command-palette-overlay {
+  backdrop-filter: none !important;
+}
+
+/* Command palette → bottom sheet on phones.
+   Overrides the component's inline (desktop) styles via !important; desktop ≥641px is untouched. */
+@media (max-width: 640px) {
+  .command-palette-overlay {
+    align-items: flex-end !important;
+    padding-top: 0 !important;
+  }
+
+  .command-palette {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding-bottom: var(--safe-bottom);
+  }
+}
+
+[data-device-tier="low"] .bottom-nav-indicator {
+  transition: transform var(--motion-fast) var(--motion-ease), opacity var(--motion-fast) var(--motion-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+  [data-device-tier="high"] .kpi-card,
+  [data-device-tier="mid"] .kpi-card {
+    transition: transform var(--motion-base) var(--motion-ease);
+  }
+
+  [data-device-tier="high"] .kpi-card:hover {
+    transform: translateY(-2px);
+  }
+
+  [data-device-tier="mid"] .kpi-card:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* ── Touch-optimized hit targets ─────────────────────────────── */
+/* Gated on viewport width, not `pointer: coarse` — device/emulator pointer
+   capability is unreliable (many mobile-width test/audit contexts report
+   pointer:fine), so it silently skipped these rules below the mobile
+   breakpoint. Every other mobile rule in this codebase is viewport-gated;
+   this now matches that contract (breakpoint scale: 640/860/1024). */
+@media (max-width: 859.98px) {
+
+  .btn,
+  .row-btn,
+  .mobile-card-action-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .tab {
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .input {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  /* Calendar hall/status filter pills — raw-Tailwind pills that render
+     ~20px tall; extend the tap area to the 44px floor without touching
+     glyph/text size. Desktop keeps the compact toolbar. */
+  .cal-filter-chip {
+    min-height: 44px;
+  }
+
+  .bottom-nav-item {
+    min-width: 58px;
+    min-height: 48px;
+  }
+
+  /* Header icon buttons — nav toggle, help, logout, profile. Clamps
+     .nav-toggle-btn (30x30) and .logout-btn (28x28), which set their own
+     fixed width/height in layout.css, up to 44px. */
+  /* Calendar toolbar prev/next/refresh — 32–36px icons; bump to 44px on mobile */
+  .cal-toolbar-icon-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Hall legend sidebar controls — toggle, All/None, collapsed pills */
+  .cal-legend-control {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .header-icon-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes shimmer {
+    from {
+      background-position: -400px 0;
+    }
+
+    to {
+      background-position: 400px 0;
+    }
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    background-color: var(--surface-2);
+    border-radius: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes modal-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.97) translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .modal-panel {
+    animation: modal-enter 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-enter {
+    animation: page-enter 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+
+  .page-content {
+    min-height: 0;
+    flex: 1;
+  }
+
+  /* Sidebar/header hover states — replaces JS onMouseOver/Out handlers */
+  .sidebar-icon-btn {
+    color: var(--text-3);
+    border-color: var(--border);
+    transition: color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease);
+  }
+
+  .sidebar-icon-btn:hover {
+    color: var(--text-1);
+    border-color: var(--border-2);
+  }
+
+  .header-icon-hover {
+    transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+  }
+
+  .header-icon-hover:hover {
+    background-color: var(--surface-2);
+    color: var(--text-1);
+  }
+
+  .logout-btn-hover {
+    transition: color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease);
+  }
+
+  .logout-btn-hover:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+  }
+
+  @keyframes bar-grow {
+    from {
+      transform: scaleY(0);
+    }
+
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  [data-device-tier="high"] .bar-grow {
+    animation: bar-grow 0.45s ease;
+    transform-origin: bottom;
+  }
+
+  [data-device-tier="mid"] .bar-grow {
+    animation: bar-grow 0.25s ease;
+    transform-origin: bottom;
+  }
+
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .day-panel-enter {
+    animation: slide-in-right 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+}
+
+/* ── FAB entry animation ──────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes fab-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.5) translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .fab {
+    animation: fab-enter 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+.sparkline {
+  width: 64px;
+  height: 24px;
+  overflow: visible;
+}
+
+@media (max-width: 640px) {
+  .sparkline {
+    width: 80px;
+    height: 28px;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-2);
+}
+

@@ -1,24 +1,6 @@
 export type BookingStatus = "confirmed" | "pencil" | "quotation" | "enquiry" | "cancelled";
 export type EventSource = "in-app" | "google";
 
-/** Canonical Bika meal-slot enum — stored lowercase, displayed via `mealSlotLabel()`. */
-export type MealSlotId = "breakfast" | "lunch" | "hi-tea" | "dinner";
-export const MEAL_SLOT_IDS: MealSlotId[] = ["breakfast", "lunch", "hi-tea", "dinner"];
-
-/** Legacy display alias kept for screens that read pack.slot directly. */
-export type MealSlotDisplay = "Breakfast" | "Lunch" | "Hi-Tea" | "Dinner";
-
-export function mealSlotLabel(s: MealSlotId): MealSlotDisplay {
-  switch (s) {
-    case "breakfast": return "Breakfast";
-    case "lunch":     return "Lunch";
-    case "hi-tea":    return "Hi-Tea";
-    case "dinner":    return "Dinner";
-  }
-}
-
-
-
 export type Venue = { id: string; name: string; city: string };
 export type Hall = {
   id: string;
@@ -30,41 +12,13 @@ export type Hall = {
   basePrice: number;
 };
 
-export type MenuItemRow = { itemId: string; quantity: number };
-
-/**
- * A meal pack. A booking can have multiple, one per meal slot.
- * Canonical id is `mealSlot` (lowercase). `slot` is the capitalized display
- * mirror kept for legacy callers.
- */
 export type MealPack = {
-  mealSlot: MealSlotId;
-  /** Display alias of mealSlot, e.g. "Breakfast". */
-  slot: MealSlotDisplay;
-  packName?: string;
+  slot: "Breakfast" | "Lunch" | "Hi-Tea" | "Dinner";
   menuName: string;
-  templateMenuId?: string;
-  /** Guest count for THIS meal (= Bika packCount / PAX). */
   plates: number;
   ratePerPlate: number;
   setupCost: number;
-  /** Per-pack extra charges. */
-  extraCharges: number;
-  /** Hall rate added ONCE per pack (never multiplied by hall count). */
-  hallRate: number;
-  startTime?: string; // "HH:mm"
-  endTime?: string;
-  items: MenuItemRow[];
-  notes?: string;
 };
-
-export type AdditionalItem = {
-  description: string;
-  charges: number;
-  quantity: number;
-};
-
-export type HallSelection = { hallId: string; charges: number };
 
 export type Payment = {
   id: string;
@@ -73,16 +27,6 @@ export type Payment = {
   ref?: string;
   amount: number;
   receivedBy: string;
-  clearingDate?: Date | null;
-};
-
-export type BookingVersionSnapshot = {
-  version: number;
-  createdAt: string;       // ISO
-  createdBy: string;       // user name (denormalised for display)
-  reason?: string;
-  /** Full booking JSON (Dates serialised as ISO strings). */
-  data: unknown;
 };
 
 export type Booking = {
@@ -92,60 +36,23 @@ export type Booking = {
   functionName: string;
   functionType: string;
   customerId: string;
-  secondCustomerId?: string;
-  referredById?: string;
-  priority?: number;
   start: Date;
   end: Date;
-
-  /** Legacy convenience: ids of selected halls. Mirrors `halls[].hallId`. */
   hallIds: string[];
-  /** Bika-faithful per-hall selections with `charges`. */
-  halls: HallSelection[];
-
   expectedGuests: number;
   confirmedGuests: number;
-
   packs: MealPack[];
-
-  /** Sum of `halls[].charges`. */
   hallCharges: number;
-
-  additionalItems: AdditionalItem[];
-  /** Legacy flat extras list derived from additionalItems. */
   extras: { label: string; amount: number }[];
-
-  /** Meals discount: flat amount OR percentage (mutually exclusive). */
-  discountAmount: number;
-  discountPercentage: number;
-  /** Extras / second discount. */
-  discountAmount2nd: number;
-  discountPercentage2nd: number;
-
-  /** Legacy aliases retained for existing money-stack code. */
-  discount1: number;     // = discountAmount
-  discount2Pct: number;  // = discountPercentage2nd
-
+  discount1: number; // amount
+  discount2Pct: number; // percent
   settlementDiscount: number;
   taxPct: number;
   advanceRequired: number;
-
-  isQuotation: boolean;
-  isPencilBooking: boolean;
-  pencilExpiresAt?: Date;
-
   payments: Payment[];
   notes?: string;
-  internalNotes?: string;
+  pencilExpiresAt?: Date;
   versions: number;
-
-  /** Finalize → snapshot trail. Newest first. */
-  versionHistory?: BookingVersionSnapshot[];
-
-  /** Party-over / settlement bookkeeping. */
-  partyOver?: boolean;
-  partyOverAt?: Date;
-  partyOverNotes?: string;
 };
 
 export type Customer = {

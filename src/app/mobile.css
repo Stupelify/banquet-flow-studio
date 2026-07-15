@@ -1,0 +1,112 @@
+/* Native Mobile Style Overrides */
+
+/* Capacitor: default — allow page scroll (login, etc.) */
+html.capacitor-native body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 100%;
+  height: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+}
+
+/* Dashboard only: lock body; scroll happens in .dashboard-main */
+html.capacitor-native:has(.dashboard-root),
+html.capacitor-native:has(.dashboard-root) body {
+  overflow: hidden;
+  height: 100%;
+}
+
+html.capacitor-native:has(.dashboard-root) .dashboard-main {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Web-only: Ionic locks body scroll; re-enable for mobile browsers (not Capacitor). */
+html:not(.capacitor-native),
+html:not(.capacitor-native) body {
+  overflow-y: auto !important;
+  touch-action: auto !important;
+}
+
+/* Capacitor: single scroll owner + fixed header below the 860px
+   mobile/desktop switch (must match only-desktop/only-mobile in layout.css) */
+@media (max-width: 859.98px) {
+  html.capacitor-native .dashboard-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+  }
+
+  html.capacitor-native .content-wrapper {
+    padding-top: calc(52px + var(--safe-top));
+  }
+}
+
+html.capacitor-native .capacitor-modal-panel {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+html.capacitor-native .input,
+html.capacitor-native select,
+html.capacitor-native textarea {
+  font-size: 16px;
+  min-height: 44px;
+}
+
+html.capacitor-native .btn:active,
+html.capacitor-native .bottom-nav-item:active,
+html.capacitor-native .mobile-card-action-btn:active {
+  transform: scale(0.98);
+  transition: transform 75ms ease-out;
+}
+
+html.capacitor-android .btn,
+html.capacitor-android .bottom-nav-item {
+  -webkit-tap-highlight-color: rgba(13, 148, 136, 0.15);
+}
+
+/* Auth pages (login) — explicit scroll-friendly page shell */
+html.capacitor-native .native-auth-page {
+  min-height: 100dvh;
+}
+
+/* iOS Liquid Glass Effect (Capacitor + Ionic) */
+.ios ion-card {
+  --background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 24px;
+  margin-bottom: 20px;
+}
+
+[data-theme="dark"] .ios ion-card {
+  --background: rgba(30, 30, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.ios ion-button {
+  --border-radius: 12px;
+  --box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+}
+
+/* Android Material Design Overrides */
+.md ion-card {
+  --background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border: none;
+  margin-bottom: 20px;
+}
+
+[data-theme="dark"] .md ion-card {
+  --background: var(--surface-2);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+}

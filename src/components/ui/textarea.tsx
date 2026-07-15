@@ -1,21 +1,23 @@
-import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { forwardRef, type TextareaHTMLAttributes } from 'react';
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"textarea">>(
-  ({ className, ...props }, ref) => {
-    return (
-      <textarea
-        className={cn(
-          "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-Textarea.displayName = "Textarea";
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  invalid?: boolean;
+}
 
-export { Textarea };
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
+  { invalid = false, className, rows = 3, ...rest },
+  ref
+) {
+  return (
+    <textarea
+      ref={ref}
+      rows={rows}
+      className={`input resize-y${invalid ? ' !border-red-400' : ''}${className ? ` ${className}` : ''}`}
+      aria-invalid={invalid || undefined}
+      {...rest}
+    />
+  );
+});
+
+export default Textarea;

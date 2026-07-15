@@ -1,32 +1,30 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import type { ReactNode } from 'react';
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        default: "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  },
-);
+type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'teal';
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+const TONE_CLASS: Record<BadgeTone, string> = {
+  neutral: 'bg-surface-2 text-text-3',
+  success: 'bg-green-50 text-green-700',
+  warning: 'bg-amber-50 text-amber-700',
+  danger: 'bg-red-50 text-red-700',
+  info: 'bg-blue-50 text-blue-700',
+  teal: 'bg-primary-50 text-primary-700',
+};
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+export interface BadgeProps {
+  tone?: BadgeTone;
+  /** Show the small status dot before the text. */
+  dot?: boolean;
+  children: ReactNode;
 }
 
-export { Badge, badgeVariants };
+/** Generic pill for non-status labels; booking statuses keep using <StatusBadge>. */
+export default function Badge({ tone = 'neutral', dot = false, children }: BadgeProps) {
+  return (
+    <span className={`status-pill ${TONE_CLASS[tone]}`}>
+      {dot && <span className="status-dot" />}
+      {children}
+    </span>
+  );
+}

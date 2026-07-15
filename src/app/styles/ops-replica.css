@@ -1,0 +1,859 @@
+/* ── Bika Ops standalone replica ───────────────────────────────────
+   Scoped to authenticated operations pages. Form surfaces restore the
+   existing production tokens below so their established UI is unchanged.
+
+   Dual-token split (intentional): .ops-replica uses warm-stone neutrals
+   (#fafaf9 / stone text) for compact list/calendar chrome; forms and
+   [data-ops-form-surface] re-bind to slate production tokens from
+   tokens.css (#f8fafc) so editable surfaces stay visually unchanged. */
+.ops-replica {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f5f5f4;
+  --surface-3: #efedea;
+  --text-1: #1c1917;
+  --text-2: #44403c;
+  --text-3: #78716c;
+  --text-4: #a8a29e;
+  --border: #ebe9e6;
+  --border-2: #d6d3d1;
+  --ring: rgba(13, 148, 136, .25);
+  --replica-radius: 6px;
+  --ops-gutter: clamp(24px, 2.5vw, 40px);
+  --row-h: 30px;
+  --cell-py: 5px;
+  --cell-px: 12px;
+  --gap: 10px;
+  --section-py: 14px;
+  color: var(--text-1);
+  font-family: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.45;
+  font-feature-settings: "ss01", "cv11";
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .ops-replica {
+  --bg: #0c0a09;
+  --surface: #14110f;
+  --surface-2: #1c1917;
+  --surface-3: #292524;
+  --text-1: #fafaf9;
+  --text-2: #e7e5e4;
+  --text-3: #a8a29e;
+  --text-4: #78716c;
+  --border: #262320;
+  --border-2: #3a3631;
+}
+
+.ops-replica .dashboard-main {
+  padding-top: var(--section-py);
+}
+
+.ops-replica .dashboard-header {
+  padding-left: max(var(--ops-gutter), var(--safe-left));
+  padding-right: max(var(--ops-gutter), var(--safe-right));
+}
+
+.ops-replica .page-content {
+  animation: ops-route-in 180ms cubic-bezier(.25, .46, .45, .94);
+}
+
+@keyframes ops-route-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ops-replica .top-nav {
+  height: 44px;
+  padding-inline: max(var(--ops-gutter), var(--safe-left)) max(var(--ops-gutter), var(--safe-right));
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.ops-replica .top-nav-dot {
+  background: var(--accent);
+}
+
+.ops-replica .top-nav-brand,
+.ops-replica .top-nav-time,
+.ops-replica .kbd,
+.ops-replica .statpill-label,
+.ops-replica td.id,
+.ops-replica td.mono {
+  font-family: var(--font-jetbrains-mono), var(--font-mono), ui-monospace, monospace;
+}
+
+.ops-replica .top-nav-link {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.ops-replica .top-nav-link.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.ops-replica .top-nav-search {
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+.ops-replica .toolbar {
+  height: 44px;
+  padding: 0 var(--ops-gutter);
+  border-radius: var(--replica-radius);
+  box-shadow: none;
+}
+
+.ops-replica .card,
+.ops-replica .card-padded,
+.ops-replica .adaptive-card,
+.ops-replica .table-shell {
+  border-color: var(--border);
+  border-radius: var(--replica-radius);
+  box-shadow: none;
+}
+
+.ops-replica .card,
+.ops-replica .card-padded {
+  --card-py: 14px;
+  --card-px: 14px;
+}
+
+.ops-replica thead th {
+  padding: 8px var(--cell-px);
+  background: var(--surface);
+  border-color: var(--border);
+  font-family: var(--font-jetbrains-mono), var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-4);
+}
+
+.ops-replica tbody tr {
+  height: var(--row-h);
+  border-color: var(--border);
+}
+
+.ops-replica tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.ops-replica tbody td {
+  font-size: 13px;
+}
+
+.ops-replica .status-badge,
+.ops-replica [class*="status-"] {
+  border-radius: 999px;
+}
+
+.ops-replica .bottom-nav {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+  padding-left: max(var(--safe-left), 14px);
+  padding-right: max(var(--safe-right), 14px);
+}
+
+.ops-replica .bottom-nav-item {
+  gap: 3px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 9.5px;
+  font-weight: 400;
+}
+
+.ops-replica .bottom-nav-item.active {
+  color: var(--accent);
+  background: transparent;
+  font-weight: 600;
+}
+
+.ops-replica .bottom-nav-badge {
+  /* Anchored to .bottom-nav-icon-wrap (the icon's own box), not the bar. */
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-jetbrains-mono), var(--font-mono), ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ops-replica .calendar-toolbar {
+  border-radius: var(--replica-radius);
+}
+
+.ops-replica .calendar-toolbar > div:first-child {
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.ops-replica .calendar-toolbar h2 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.ops-replica .calendar-toolbar button,
+.ops-replica .calendar-toolbar input,
+.ops-replica .calendar-toolbar [class*="rounded-xl"] {
+  border-radius: var(--replica-radius);
+}
+
+.ops-replica .calendar-toolbar button {
+  min-height: 30px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ops-replica .calendar-toolbar .input {
+  min-height: 30px;
+  border-radius: var(--replica-radius);
+  font-size: 12px;
+}
+
+.ops-replica .calendar-booking-drawer {
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(28, 25, 23, .32);
+}
+
+.ops-replica .calendar-booking-drawer-panel {
+  max-width: 700px;
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+  box-shadow: var(--shadow-sheet);
+}
+
+.ops-replica .calendar-booking-drawer-panel [class*="rounded-xl"],
+.ops-replica .calendar-booking-drawer-panel [class*="rounded-lg"] {
+  border-radius: var(--replica-radius);
+}
+
+.ops-replica .command-palette {
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-menu) !important;
+}
+
+.ops-replica .kpi-card {
+  border-radius: var(--replica-radius);
+  box-shadow: none;
+}
+
+.ops-replica .kpi-label {
+  font-family: var(--font-jetbrains-mono), var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.ops-replica .kpi-value {
+  font-size: 22px;
+  letter-spacing: -.04em;
+}
+
+/* Exact standalone operations layout primitives. */
+.ops-replica .ops-content-wrapper {
+  width: 100%;
+  margin-left: 0 !important;
+}
+
+.ops-replica .ops-main {
+  max-width: none !important;
+  padding: 0 !important;
+  background: var(--bg);
+}
+
+.ops-replica .page-content {
+  min-height: 100%;
+}
+
+.ops-replica .ops-route {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0 !important;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.ops-replica .ops-route > .toolbar {
+  flex-shrink: 0;
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--ops-gutter);
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.ops-replica .ops-route > .toolbar .toolbar-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ops-replica .ops-route > .toolbar .toolbar-actions {
+  gap: 8px;
+}
+
+.ops-replica .ops-toolbar-search {
+  width: min(240px, 24vw);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--replica-radius);
+  background: var(--surface);
+  color: var(--text-4);
+}
+
+.ops-replica .ops-toolbar-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 12px;
+}
+
+.ops-replica .ops-filter-button {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--replica-radius);
+  font-size: 12px;
+}
+
+.ops-replica .ops-filter-count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  display: inline-grid;
+  place-items: center;
+  font-family: var(--font-jetbrains-mono), var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+}
+
+.ops-replica .ops-view-bar {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px var(--ops-gutter);
+  overflow-x: auto;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ops-replica .ops-view-bar button {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+}
+
+.ops-replica .ops-section-tabs {
+  min-height: 48px;
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  padding: 0 var(--ops-gutter);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.ops-replica .ops-section-tab {
+  position: relative;
+  min-width: max-content;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-jetbrains-mono), var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 120ms ease;
+}
+
+.ops-replica .ops-section-tab::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: transparent;
+}
+
+.ops-replica .ops-section-tab:hover:not(:disabled),
+.ops-replica .ops-section-tab.active {
+  color: var(--text-1);
+}
+
+.ops-replica .ops-section-tab.active {
+  font-weight: 700;
+}
+
+.ops-replica .ops-section-tab.active::after {
+  background: var(--accent);
+}
+
+.ops-replica .ops-section-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.ops-replica .ops-list-controls {
+  margin: 8px var(--ops-gutter);
+  padding: 8px !important;
+  border-radius: var(--replica-radius);
+}
+
+/* Titles / search / filters above a full-bleed table — not the table itself. */
+.ops-replica .ops-list-chrome {
+  padding-left: var(--ops-gutter);
+  padding-right: var(--ops-gutter);
+  box-sizing: border-box;
+}
+
+.ops-replica .ops-list-route > .card {
+  margin: 0 !important;
+  padding: 12px var(--ops-gutter);
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ops-replica .ops-list-route > .card:last-of-type {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* No horizontal padding — tables are full-bleed. Chrome uses .ops-list-chrome. */
+  padding: 14px 0 0;
+  border-bottom: 0;
+}
+
+.ops-replica .ops-list-route > .card:last-of-type > .table-shell {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+}
+
+/* Legacy unmarked chrome on list cards (before markup adopts .ops-list-chrome). */
+.ops-replica .ops-list-route > .card:last-of-type > .page-head,
+.ops-replica .ops-list-route > .card:last-of-type > .empty-state,
+.ops-replica .ops-list-route > .card:last-of-type > .py-6 {
+  padding-left: var(--ops-gutter);
+  padding-right: var(--ops-gutter);
+}
+
+.ops-replica .ops-list-route .mobile-card-list {
+  padding-left: var(--ops-gutter);
+  padding-right: var(--ops-gutter);
+  padding-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.ops-replica .ops-table-card {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  /* Full-bleed tables — no side padding / margin on this surface. */
+  padding-inline: 0;
+  margin: 0;
+}
+
+.ops-replica .ops-table-card > .empty-state,
+.ops-replica .ops-table-card > .py-6,
+.ops-replica .ops-table-card > .ops-list-chrome {
+  padding-left: var(--ops-gutter);
+  padding-right: var(--ops-gutter);
+  box-sizing: border-box;
+}
+
+/* Desktop card grids sit inset; `.table-shell` stays full-bleed. */
+.ops-replica .ops-table-card > .md\:block:not(.table-shell) {
+  padding-left: var(--ops-gutter);
+  padding-right: var(--ops-gutter);
+  box-sizing: border-box;
+}
+
+.ops-replica .ops-table-card > .table-shell,
+.ops-replica .ops-route .table-shell {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  margin: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.ops-replica .table-pagination {
+  position: sticky;
+  left: 0;
+  width: 100%;
+  min-width: min(100%, 720px);
+  margin: 0;
+  padding: 10px var(--ops-gutter) max(18px, calc(10px + var(--safe-bottom)));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  box-sizing: border-box;
+}
+
+.ops-replica .table-pagination > div {
+  flex-wrap: wrap;
+}
+
+.ops-replica .table-pagination .btn {
+  min-width: 76px;
+}
+
+.ops-replica .ops-route .data-table {
+  min-width: 960px;
+  border-collapse: collapse;
+}
+
+.ops-replica .ops-route .data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.ops-replica .ops-route .data-table thead th {
+  height: 36px;
+  padding: 0 16px !important;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+
+.ops-replica .ops-route .data-table tbody tr {
+  height: 42px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ops-replica .ops-route .data-table tbody td {
+  padding: 4px 14px !important;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+.ops-replica .ops-route .data-table tr > :first-child {
+  /* Full-bleed table: inset via cell padding, not table margin. */
+  padding-left: var(--ops-gutter) !important;
+}
+
+.ops-replica .ops-route .data-table tr > :last-child {
+  padding-right: var(--ops-gutter) !important;
+}
+
+.ops-replica .ops-click-row {
+  cursor: pointer;
+  outline: none;
+}
+
+.ops-replica .ops-click-row:focus-visible {
+  box-shadow: inset 3px 0 var(--accent);
+  background: var(--surface-2);
+}
+
+.ops-replica .ops-route > .card:not([data-ops-form-surface]),
+.ops-replica .ops-route > section.card {
+  margin: 8px var(--ops-gutter);
+}
+
+.ops-replica .ops-catalog-route,
+.ops-replica .ops-report-route,
+.ops-replica .ops-dashboard-route {
+  overflow-y: auto;
+}
+
+.ops-replica .ops-catalog-route > .card,
+.ops-replica .ops-report-route > .card,
+.ops-replica .ops-dashboard-route > .card {
+  border-radius: var(--replica-radius);
+}
+
+.ops-replica .ops-dashboard-route {
+  padding-bottom: max(20px, calc(12px + var(--safe-bottom)));
+}
+
+.ops-replica .ops-dashboard-route > .toolbar .toolbar-stats {
+  display: none;
+}
+
+.ops-replica .ops-dashboard-route > :not(.toolbar) {
+  margin: 8px var(--ops-gutter) 0;
+}
+
+.ops-replica .ops-dashboard-filters {
+  min-width: 0;
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+}
+
+.ops-replica .ops-dashboard-filters .input,
+.ops-replica .ops-dashboard-filters button {
+  height: 32px;
+  min-height: 32px;
+}
+
+.ops-replica .filter-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.ops-replica .filter-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 20px max(36px, calc(24px + var(--safe-bottom)));
+  overscroll-behavior: contain;
+}
+
+.ops-replica .ops-catalog-route > .ops-section-tabs {
+  margin: 0;
+}
+
+.ops-replica .ops-catalog-panels > .card {
+  margin: 0 !important;
+  padding: 10px var(--ops-gutter) 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ops-replica .ops-catalog-panel {
+  margin: 0 !important;
+  padding: 10px var(--ops-gutter) 0;
+  border-width: 0 0 1px;
+  border-radius: 0 !important;
+  box-shadow: none;
+}
+
+.ops-replica .ops-calendar-page {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ops-replica .ops-calendar-route {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0 !important;
+}
+
+.ops-replica .ops-calendar-route > * {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.ops-replica .calendar-toolbar {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ops-replica .calendar-toolbar > div:first-child {
+  gap: 8px;
+  padding: 7px var(--ops-gutter);
+}
+
+.ops-replica .calendar-toolbar > div:last-child {
+  gap: 8px;
+  padding: 5px var(--ops-gutter);
+}
+
+.ops-replica .ops-inline-tabs {
+  display: inline-flex;
+  height: 30px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--replica-radius);
+  background: var(--surface);
+}
+
+.ops-replica .ops-inline-tab {
+  padding: 0 9px;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ops-replica .ops-inline-tab:last-child {
+  border-right: 0;
+}
+
+/* Calendar view/source filter chips — 30px tall by default (below the
+   44px touch-target floor). Buttons stretch to fill via inline-flex's
+   default align-items:stretch, so raising the row height is enough; no
+   glyph/font-size change. */
+@media (max-width: 859.98px) {
+  .ops-replica .ops-inline-tabs {
+    height: 44px;
+  }
+}
+
+.ops-replica .ops-inline-tab.active {
+  background: var(--surface-2);
+  color: var(--accent);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.ops-replica .venue-timeline-shell {
+  border-width: 0 0 1px;
+  border-radius: 0;
+}
+
+@media (min-width: 860px) {
+  .ops-replica .ops-list-controls {
+    display: none;
+  }
+}
+
+@media (max-width: 859.98px) {
+  .ops-replica .ops-content-wrapper {
+    /* Comfortable phone inset — keep titles/actions off the bezel. */
+    --ops-gutter: max(20px, var(--safe-left), var(--safe-right));
+  }
+
+  .ops-replica .ops-route {
+    overflow-y: auto;
+  }
+
+  .ops-replica .ops-route > .toolbar .toolbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .ops-replica .ops-dashboard-filters {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .ops-replica .ops-dashboard-filters .input {
+    flex: 1 1 0;
+    min-width: 110px;
+  }
+
+  .ops-replica .ops-route > .toolbar,
+  .ops-replica .toolbar {
+    min-height: 48px;
+    height: auto;
+    padding: 10px var(--ops-gutter);
+  }
+
+  .ops-replica .ops-route > .toolbar .toolbar-stats {
+    display: none;
+  }
+
+  /* Mobile keeps ONE search + the Filters button in the toolbar (the duplicate
+     list-controls card was removed). Search takes its own full-width row. */
+  .ops-replica .ops-toolbar-search {
+    order: -1;
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .ops-replica .ops-view-bar {
+    padding: 7px var(--ops-gutter);
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .ops-replica .ops-section-tabs {
+    gap: 8px;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .ops-replica .ops-section-tab {
+    padding: 0 5px;
+    min-height: 44px;
+  }
+
+  .ops-replica .ops-list-controls {
+    margin: 8px var(--ops-gutter);
+  }
+
+  .ops-replica .calendar-booking-drawer {
+    align-items: flex-end;
+  }
+
+  .ops-replica .calendar-booking-drawer-panel {
+    height: min(92vh, 760px);
+    max-width: none;
+    border-width: 1px 0 0;
+    border-radius: 10px 10px 0 0;
+  }
+}
+
+/* Preserve existing editable forms and their modal shells. */
+.ops-replica form,
+[data-ops-form-surface="true"] {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --text-1: #0f172a;
+  --text-2: #334155;
+  --text-3: #64748b;
+  --text-4: #6b7280;
+  --border: #e2e8f0;
+  --border-2: #cbd5e1;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .ops-replica form,
+[data-theme="dark"] [data-ops-form-surface="true"] {
+  --bg: #0f1011;
+  --surface: #141516;
+  --surface-2: #1e1f21;
+  --surface-3: #2a2c2e;
+  --text-1: #f8fafc;
+  --text-2: #f1f5f9;
+  --text-3: #cbd5e1;
+  --text-4: #94a3b8;
+  --border: #262626;
+  --border-2: #333333;
+}

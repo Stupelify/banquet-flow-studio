@@ -9,90 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VenuesRouteImport } from './routes/venues'
-import { Route as UsersRouteImport } from './routes/users'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RolesRouteImport } from './routes/roles'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as PaymentsRouteImport } from './routes/payments'
-import { Route as MenuRouteImport } from './routes/menu'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as EnquiriesRouteImport } from './routes/enquiries'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CustomersRouteImport } from './routes/customers'
-import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as BookingsRouteImport } from './routes/bookings'
-import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard/settings'
+import { Route as DashboardReportsRouteImport } from './routes/dashboard/reports'
+import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
+import { Route as DashboardPaymentsRouteImport } from './routes/dashboard/payments'
+import { Route as DashboardLogsRouteImport } from './routes/dashboard/logs'
+import { Route as DashboardHallsRouteImport } from './routes/dashboard/halls'
+import { Route as DashboardEnquiriesRouteImport } from './routes/dashboard/enquiries'
+import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
+import { Route as DashboardMenuIndexRouteImport } from './routes/dashboard/menu/index'
+import { Route as DashboardCustomersIndexRouteImport } from './routes/dashboard/customers/index'
+import { Route as DashboardBookingsIndexRouteImport } from './routes/dashboard/bookings/index'
+import { Route as DashboardMenuVendorsRouteImport } from './routes/dashboard/menu/vendors'
+import { Route as DashboardMenuIngredientsRouteImport } from './routes/dashboard/menu/ingredients'
+import { Route as DashboardCustomersCreateRouteImport } from './routes/dashboard/customers/create'
+import { Route as DashboardBookingsNewRouteImport } from './routes/dashboard/bookings/new'
+import { Route as DashboardBookingsIdRouteImport } from './routes/dashboard/bookings/$id'
+import { Route as DashboardCustomersIdIndexRouteImport } from './routes/dashboard/customers/$id/index'
+import { Route as DashboardCustomersIdEditRouteImport } from './routes/dashboard/customers/$id/edit'
 
-const VenuesRoute = VenuesRouteImport.update({
-  id: '/venues',
-  path: '/venues',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UsersRoute = UsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RolesRoute = RolesRouteImport.update({
-  id: '/roles',
-  path: '/roles',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaymentsRoute = PaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MenuRoute = MenuRouteImport.update({
-  id: '/menu',
-  path: '/menu',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EnquiriesRoute = EnquiriesRouteImport.update({
-  id: '/enquiries',
-  path: '/enquiries',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CustomersRoute = CustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalendarRoute = CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BookingsRoute = BookingsRouteImport.update({
-  id: '/bookings',
-  path: '/bookings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ActivityRoute = ActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -100,182 +47,260 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardReportsRoute = DashboardReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardProfileRoute = DashboardProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardPaymentsRoute = DashboardPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardLogsRoute = DashboardLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardHallsRoute = DashboardHallsRouteImport.update({
+  id: '/halls',
+  path: '/halls',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardEnquiriesRoute = DashboardEnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardMenuIndexRoute = DashboardMenuIndexRouteImport.update({
+  id: '/menu/',
+  path: '/menu/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardCustomersIndexRoute = DashboardCustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBookingsIndexRoute = DashboardBookingsIndexRouteImport.update({
+  id: '/bookings/',
+  path: '/bookings/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardMenuVendorsRoute = DashboardMenuVendorsRouteImport.update({
+  id: '/menu/vendors',
+  path: '/menu/vendors',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardMenuIngredientsRoute =
+  DashboardMenuIngredientsRouteImport.update({
+    id: '/menu/ingredients',
+    path: '/menu/ingredients',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardCustomersCreateRoute =
+  DashboardCustomersCreateRouteImport.update({
+    id: '/customers/create',
+    path: '/customers/create',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardBookingsNewRoute = DashboardBookingsNewRouteImport.update({
+  id: '/bookings/new',
+  path: '/bookings/new',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBookingsIdRoute = DashboardBookingsIdRouteImport.update({
+  id: '/bookings/$id',
+  path: '/bookings/$id',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardCustomersIdIndexRoute =
+  DashboardCustomersIdIndexRouteImport.update({
+    id: '/customers/$id/',
+    path: '/customers/$id/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardCustomersIdEditRoute =
+  DashboardCustomersIdEditRouteImport.update({
+    id: '/customers/$id/edit',
+    path: '/customers/$id/edit',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
-  '/bookings': typeof BookingsRoute
-  '/calendar': typeof CalendarRoute
-  '/customers': typeof CustomersRoute
-  '/dashboard': typeof DashboardRoute
-  '/enquiries': typeof EnquiriesRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/menu': typeof MenuRoute
-  '/payments': typeof PaymentsRoute
-  '/reports': typeof ReportsRoute
-  '/roles': typeof RolesRoute
-  '/settings': typeof SettingsRoute
-  '/users': typeof UsersRoute
-  '/venues': typeof VenuesRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
+  '/dashboard/enquiries': typeof DashboardEnquiriesRoute
+  '/dashboard/halls': typeof DashboardHallsRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
+  '/dashboard/payments': typeof DashboardPaymentsRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/reports': typeof DashboardReportsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/bookings/$id': typeof DashboardBookingsIdRoute
+  '/dashboard/bookings/new': typeof DashboardBookingsNewRoute
+  '/dashboard/customers/create': typeof DashboardCustomersCreateRoute
+  '/dashboard/menu/ingredients': typeof DashboardMenuIngredientsRoute
+  '/dashboard/menu/vendors': typeof DashboardMenuVendorsRoute
+  '/dashboard/bookings/': typeof DashboardBookingsIndexRoute
+  '/dashboard/customers/': typeof DashboardCustomersIndexRoute
+  '/dashboard/menu/': typeof DashboardMenuIndexRoute
+  '/dashboard/customers/$id/edit': typeof DashboardCustomersIdEditRoute
+  '/dashboard/customers/$id/': typeof DashboardCustomersIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
-  '/bookings': typeof BookingsRoute
-  '/calendar': typeof CalendarRoute
-  '/customers': typeof CustomersRoute
-  '/dashboard': typeof DashboardRoute
-  '/enquiries': typeof EnquiriesRoute
   '/login': typeof LoginRoute
-  '/menu': typeof MenuRoute
-  '/payments': typeof PaymentsRoute
-  '/reports': typeof ReportsRoute
-  '/roles': typeof RolesRoute
-  '/settings': typeof SettingsRoute
-  '/users': typeof UsersRoute
-  '/venues': typeof VenuesRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
+  '/dashboard/enquiries': typeof DashboardEnquiriesRoute
+  '/dashboard/halls': typeof DashboardHallsRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
+  '/dashboard/payments': typeof DashboardPaymentsRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/reports': typeof DashboardReportsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/bookings/$id': typeof DashboardBookingsIdRoute
+  '/dashboard/bookings/new': typeof DashboardBookingsNewRoute
+  '/dashboard/customers/create': typeof DashboardCustomersCreateRoute
+  '/dashboard/menu/ingredients': typeof DashboardMenuIngredientsRoute
+  '/dashboard/menu/vendors': typeof DashboardMenuVendorsRoute
+  '/dashboard/bookings': typeof DashboardBookingsIndexRoute
+  '/dashboard/customers': typeof DashboardCustomersIndexRoute
+  '/dashboard/menu': typeof DashboardMenuIndexRoute
+  '/dashboard/customers/$id/edit': typeof DashboardCustomersIdEditRoute
+  '/dashboard/customers/$id': typeof DashboardCustomersIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
-  '/bookings': typeof BookingsRoute
-  '/calendar': typeof CalendarRoute
-  '/customers': typeof CustomersRoute
-  '/dashboard': typeof DashboardRoute
-  '/enquiries': typeof EnquiriesRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/menu': typeof MenuRoute
-  '/payments': typeof PaymentsRoute
-  '/reports': typeof ReportsRoute
-  '/roles': typeof RolesRoute
-  '/settings': typeof SettingsRoute
-  '/users': typeof UsersRoute
-  '/venues': typeof VenuesRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
+  '/dashboard/enquiries': typeof DashboardEnquiriesRoute
+  '/dashboard/halls': typeof DashboardHallsRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
+  '/dashboard/payments': typeof DashboardPaymentsRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/reports': typeof DashboardReportsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/bookings/$id': typeof DashboardBookingsIdRoute
+  '/dashboard/bookings/new': typeof DashboardBookingsNewRoute
+  '/dashboard/customers/create': typeof DashboardCustomersCreateRoute
+  '/dashboard/menu/ingredients': typeof DashboardMenuIngredientsRoute
+  '/dashboard/menu/vendors': typeof DashboardMenuVendorsRoute
+  '/dashboard/bookings/': typeof DashboardBookingsIndexRoute
+  '/dashboard/customers/': typeof DashboardCustomersIndexRoute
+  '/dashboard/menu/': typeof DashboardMenuIndexRoute
+  '/dashboard/customers/$id/edit': typeof DashboardCustomersIdEditRoute
+  '/dashboard/customers/$id/': typeof DashboardCustomersIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/activity'
-    | '/bookings'
-    | '/calendar'
-    | '/customers'
     | '/dashboard'
-    | '/enquiries'
     | '/login'
-    | '/menu'
-    | '/payments'
-    | '/reports'
-    | '/roles'
-    | '/settings'
-    | '/users'
-    | '/venues'
+    | '/dashboard/calendar'
+    | '/dashboard/enquiries'
+    | '/dashboard/halls'
+    | '/dashboard/logs'
+    | '/dashboard/payments'
+    | '/dashboard/profile'
+    | '/dashboard/reports'
+    | '/dashboard/settings'
+    | '/dashboard/'
+    | '/dashboard/bookings/$id'
+    | '/dashboard/bookings/new'
+    | '/dashboard/customers/create'
+    | '/dashboard/menu/ingredients'
+    | '/dashboard/menu/vendors'
+    | '/dashboard/bookings/'
+    | '/dashboard/customers/'
+    | '/dashboard/menu/'
+    | '/dashboard/customers/$id/edit'
+    | '/dashboard/customers/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/activity'
-    | '/bookings'
-    | '/calendar'
-    | '/customers'
-    | '/dashboard'
-    | '/enquiries'
     | '/login'
-    | '/menu'
-    | '/payments'
-    | '/reports'
-    | '/roles'
-    | '/settings'
-    | '/users'
-    | '/venues'
+    | '/dashboard/calendar'
+    | '/dashboard/enquiries'
+    | '/dashboard/halls'
+    | '/dashboard/logs'
+    | '/dashboard/payments'
+    | '/dashboard/profile'
+    | '/dashboard/reports'
+    | '/dashboard/settings'
+    | '/dashboard'
+    | '/dashboard/bookings/$id'
+    | '/dashboard/bookings/new'
+    | '/dashboard/customers/create'
+    | '/dashboard/menu/ingredients'
+    | '/dashboard/menu/vendors'
+    | '/dashboard/bookings'
+    | '/dashboard/customers'
+    | '/dashboard/menu'
+    | '/dashboard/customers/$id/edit'
+    | '/dashboard/customers/$id'
   id:
     | '__root__'
     | '/'
-    | '/activity'
-    | '/bookings'
-    | '/calendar'
-    | '/customers'
     | '/dashboard'
-    | '/enquiries'
     | '/login'
-    | '/menu'
-    | '/payments'
-    | '/reports'
-    | '/roles'
-    | '/settings'
-    | '/users'
-    | '/venues'
+    | '/dashboard/calendar'
+    | '/dashboard/enquiries'
+    | '/dashboard/halls'
+    | '/dashboard/logs'
+    | '/dashboard/payments'
+    | '/dashboard/profile'
+    | '/dashboard/reports'
+    | '/dashboard/settings'
+    | '/dashboard/'
+    | '/dashboard/bookings/$id'
+    | '/dashboard/bookings/new'
+    | '/dashboard/customers/create'
+    | '/dashboard/menu/ingredients'
+    | '/dashboard/menu/vendors'
+    | '/dashboard/bookings/'
+    | '/dashboard/customers/'
+    | '/dashboard/menu/'
+    | '/dashboard/customers/$id/edit'
+    | '/dashboard/customers/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ActivityRoute: typeof ActivityRoute
-  BookingsRoute: typeof BookingsRoute
-  CalendarRoute: typeof CalendarRoute
-  CustomersRoute: typeof CustomersRoute
-  DashboardRoute: typeof DashboardRoute
-  EnquiriesRoute: typeof EnquiriesRoute
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
-  MenuRoute: typeof MenuRoute
-  PaymentsRoute: typeof PaymentsRoute
-  ReportsRoute: typeof ReportsRoute
-  RolesRoute: typeof RolesRoute
-  SettingsRoute: typeof SettingsRoute
-  UsersRoute: typeof UsersRoute
-  VenuesRoute: typeof VenuesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/venues': {
-      id: '/venues'
-      path: '/venues'
-      fullPath: '/venues'
-      preLoaderRoute: typeof VenuesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/users': {
-      id: '/users'
-      path: '/users'
-      fullPath: '/users'
-      preLoaderRoute: typeof UsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/roles': {
-      id: '/roles'
-      path: '/roles'
-      fullPath: '/roles'
-      preLoaderRoute: typeof RolesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/payments': {
-      id: '/payments'
-      path: '/payments'
-      fullPath: '/payments'
-      preLoaderRoute: typeof PaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/menu': {
-      id: '/menu'
-      path: '/menu'
-      fullPath: '/menu'
-      preLoaderRoute: typeof MenuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -283,46 +308,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/enquiries': {
-      id: '/enquiries'
-      path: '/enquiries'
-      fullPath: '/enquiries'
-      preLoaderRoute: typeof EnquiriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/customers': {
-      id: '/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof CustomersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bookings': {
-      id: '/bookings'
-      path: '/bookings'
-      fullPath: '/bookings'
-      preLoaderRoute: typeof BookingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/activity': {
-      id: '/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof ActivityRouteImport
+      preLoaderRoute: typeof DashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -332,26 +322,205 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/reports': {
+      id: '/dashboard/reports'
+      path: '/reports'
+      fullPath: '/dashboard/reports'
+      preLoaderRoute: typeof DashboardReportsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/profile': {
+      id: '/dashboard/profile'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof DashboardProfileRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/payments': {
+      id: '/dashboard/payments'
+      path: '/payments'
+      fullPath: '/dashboard/payments'
+      preLoaderRoute: typeof DashboardPaymentsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/logs': {
+      id: '/dashboard/logs'
+      path: '/logs'
+      fullPath: '/dashboard/logs'
+      preLoaderRoute: typeof DashboardLogsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/halls': {
+      id: '/dashboard/halls'
+      path: '/halls'
+      fullPath: '/dashboard/halls'
+      preLoaderRoute: typeof DashboardHallsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/enquiries': {
+      id: '/dashboard/enquiries'
+      path: '/enquiries'
+      fullPath: '/dashboard/enquiries'
+      preLoaderRoute: typeof DashboardEnquiriesRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/calendar': {
+      id: '/dashboard/calendar'
+      path: '/calendar'
+      fullPath: '/dashboard/calendar'
+      preLoaderRoute: typeof DashboardCalendarRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/menu/': {
+      id: '/dashboard/menu/'
+      path: '/menu'
+      fullPath: '/dashboard/menu/'
+      preLoaderRoute: typeof DashboardMenuIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/customers/': {
+      id: '/dashboard/customers/'
+      path: '/customers'
+      fullPath: '/dashboard/customers/'
+      preLoaderRoute: typeof DashboardCustomersIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/bookings/': {
+      id: '/dashboard/bookings/'
+      path: '/bookings'
+      fullPath: '/dashboard/bookings/'
+      preLoaderRoute: typeof DashboardBookingsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/menu/vendors': {
+      id: '/dashboard/menu/vendors'
+      path: '/menu/vendors'
+      fullPath: '/dashboard/menu/vendors'
+      preLoaderRoute: typeof DashboardMenuVendorsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/menu/ingredients': {
+      id: '/dashboard/menu/ingredients'
+      path: '/menu/ingredients'
+      fullPath: '/dashboard/menu/ingredients'
+      preLoaderRoute: typeof DashboardMenuIngredientsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/customers/create': {
+      id: '/dashboard/customers/create'
+      path: '/customers/create'
+      fullPath: '/dashboard/customers/create'
+      preLoaderRoute: typeof DashboardCustomersCreateRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/bookings/new': {
+      id: '/dashboard/bookings/new'
+      path: '/bookings/new'
+      fullPath: '/dashboard/bookings/new'
+      preLoaderRoute: typeof DashboardBookingsNewRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/bookings/$id': {
+      id: '/dashboard/bookings/$id'
+      path: '/bookings/$id'
+      fullPath: '/dashboard/bookings/$id'
+      preLoaderRoute: typeof DashboardBookingsIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/customers/$id/': {
+      id: '/dashboard/customers/$id/'
+      path: '/customers/$id'
+      fullPath: '/dashboard/customers/$id/'
+      preLoaderRoute: typeof DashboardCustomersIdIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/customers/$id/edit': {
+      id: '/dashboard/customers/$id/edit'
+      path: '/customers/$id/edit'
+      fullPath: '/dashboard/customers/$id/edit'
+      preLoaderRoute: typeof DashboardCustomersIdEditRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
+interface DashboardRouteRouteChildren {
+  DashboardCalendarRoute: typeof DashboardCalendarRoute
+  DashboardEnquiriesRoute: typeof DashboardEnquiriesRoute
+  DashboardHallsRoute: typeof DashboardHallsRoute
+  DashboardLogsRoute: typeof DashboardLogsRoute
+  DashboardPaymentsRoute: typeof DashboardPaymentsRoute
+  DashboardProfileRoute: typeof DashboardProfileRoute
+  DashboardReportsRoute: typeof DashboardReportsRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardBookingsIdRoute: typeof DashboardBookingsIdRoute
+  DashboardBookingsNewRoute: typeof DashboardBookingsNewRoute
+  DashboardCustomersCreateRoute: typeof DashboardCustomersCreateRoute
+  DashboardMenuIngredientsRoute: typeof DashboardMenuIngredientsRoute
+  DashboardMenuVendorsRoute: typeof DashboardMenuVendorsRoute
+  DashboardBookingsIndexRoute: typeof DashboardBookingsIndexRoute
+  DashboardCustomersIndexRoute: typeof DashboardCustomersIndexRoute
+  DashboardMenuIndexRoute: typeof DashboardMenuIndexRoute
+  DashboardCustomersIdEditRoute: typeof DashboardCustomersIdEditRoute
+  DashboardCustomersIdIndexRoute: typeof DashboardCustomersIdIndexRoute
+}
+
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardCalendarRoute: DashboardCalendarRoute,
+  DashboardEnquiriesRoute: DashboardEnquiriesRoute,
+  DashboardHallsRoute: DashboardHallsRoute,
+  DashboardLogsRoute: DashboardLogsRoute,
+  DashboardPaymentsRoute: DashboardPaymentsRoute,
+  DashboardProfileRoute: DashboardProfileRoute,
+  DashboardReportsRoute: DashboardReportsRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardBookingsIdRoute: DashboardBookingsIdRoute,
+  DashboardBookingsNewRoute: DashboardBookingsNewRoute,
+  DashboardCustomersCreateRoute: DashboardCustomersCreateRoute,
+  DashboardMenuIngredientsRoute: DashboardMenuIngredientsRoute,
+  DashboardMenuVendorsRoute: DashboardMenuVendorsRoute,
+  DashboardBookingsIndexRoute: DashboardBookingsIndexRoute,
+  DashboardCustomersIndexRoute: DashboardCustomersIndexRoute,
+  DashboardMenuIndexRoute: DashboardMenuIndexRoute,
+  DashboardCustomersIdEditRoute: DashboardCustomersIdEditRoute,
+  DashboardCustomersIdIndexRoute: DashboardCustomersIdIndexRoute,
+}
+
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ActivityRoute: ActivityRoute,
-  BookingsRoute: BookingsRoute,
-  CalendarRoute: CalendarRoute,
-  CustomersRoute: CustomersRoute,
-  DashboardRoute: DashboardRoute,
-  EnquiriesRoute: EnquiriesRoute,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
   LoginRoute: LoginRoute,
-  MenuRoute: MenuRoute,
-  PaymentsRoute: PaymentsRoute,
-  ReportsRoute: ReportsRoute,
-  RolesRoute: RolesRoute,
-  SettingsRoute: SettingsRoute,
-  UsersRoute: UsersRoute,
-  VenuesRoute: VenuesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
