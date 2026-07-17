@@ -77,10 +77,8 @@ const apiClient: AxiosInstance = axios.create({
 
 const USE_MOCK =
   typeof window !== 'undefined' &&
-  (window.location.hostname.includes('lovable') ||
-    window.location.hostname.includes('sandbox') ||
-    window.location.hostname.includes('webcontainer') ||
-    import.meta.env.VITE_USE_MOCK_API === 'true');
+  (window.location.hostname !== 'banquet.bikafood.com' &&
+   import.meta.env.VITE_USE_MOCK_API !== 'false');
 
 if (USE_MOCK) {
   // @ts-ignore
